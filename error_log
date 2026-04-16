@@ -1,0 +1,6 @@
+[12-Dec-2025 22:36:07 UTC] PHP Warning:  Undefined array key "username" in /home/tharki/rap.genznewz.com/interact.php on line 33
+[12-Dec-2025 22:36:07 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null in /home/tharki/rap.genznewz.com/interact.php:41
+Stack trace:
+#0 /home/tharki/rap.genznewz.com/interact.php(41): PDOStatement->execute()
+#1 {main}
+  thrown in /home/tharki/rap.genznewz.com/interact.php on line 41

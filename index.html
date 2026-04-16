@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RapR v25.5 - TikTok Added</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CORE LAYOUT --- */
+        body { background: #000; color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
+        #app-container { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; background: #000; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid #222; border-right: 1px solid #222; }
+
+        /* --- SCROLLBAR --- */
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        *::-webkit-scrollbar { display: none; }
+
+        /* --- VIEWS --- */
+        .view-section { display: none; flex: 1; width: 100%; height: 100%; position: relative; overflow: hidden; }
+        .view-section.active { display: block; }
+
+        /* --- FEED --- */
+        #feed-container { width: 100%; height: 100%; position: relative; overflow: hidden; background: #000; }
+        .video-card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; will-change: transform; user-select: none; }
+        video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        
+        .gesture-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
+        .overlay-gradient { position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); pointer-events: none; z-index: 20; }
+
+        /* --- ICONS & STAMPS --- */
+        .center-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 60px; color: rgba(255,255,255,0.8); pointer-events: none; opacity: 0; transition: all 0.2s; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); z-index: 30; }
+        .paused .center-play-icon { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .stamp { position: absolute; top: 100px; padding: 5px 15px; border: 4px solid; border-radius: 10px; font-size: 36px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; opacity: 0; z-index: 40; pointer-events: none; backdrop-filter: blur(2px); transition: opacity 0.1s; }
+        .stamp-fire { left: 40px; color: #22c55e; border-color: #22c55e; transform: rotate(-15deg); box-shadow: 0 0 15px rgba(34,197,94,0.5); }
+        .stamp-trash { right: 40px; color: #ef4444; border-color: #ef4444; transform: rotate(15deg); box-shadow: 0 0 15px rgba(239,68,68,0.5); }
+
+        .verified-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: middle; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+        /* --- INTERACTIONS --- */
+        .interaction-column { position: absolute; bottom: 130px; right: 15px; display: flex; flex-direction: column; gap: 20px; z-index: 50; align-items: center; pointer-events: auto; }
+        .action-btn { width: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+        .action-btn:active { transform: scale(0.9); }
+        
+        .action-icon-bg { 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            width: 48px; height: 48px; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            border: 1px solid rgba(255,255,255,0.15); 
+            margin-bottom: 4px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+        
+        .fa-heart.liked { color: #ef4444; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+        .fa-bookmark.saved { color: #facc15; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); }
+
+        @keyframes heartBurst {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        
+        .comment-heart-active {
+            color: #ef4444 !important; 
+            font-weight: 900 !important; 
+            animation: heartBurst 0.3s ease-out forwards;
+        }
+
+        /* --- UI ELEMENTS --- */
+        .tag-pill { display: inline-block; padding: 6px 14px; background: #222; border-radius: 20px; font-size: 11px; font-weight: 700; color: #aaa; margin-right: 8px; border: 1px solid #333; transition: all 0.2s; cursor: pointer; white-space: nowrap; }
+        .tag-pill:hover { border-color: white; color: white; background: #333; }
+        .tag-pill.active { background: white; color: black; border-color: white; }
+
+        #auth-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
+        
+        /* --- PARTICLES --- */
+        @keyframes floatUp { 0% { opacity: 1; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(var(--tw-translate-x), -150px) scale(1.5); } }
+        @keyframes fallDown { 0% { opacity: 1; transform: translate(0, 0) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--tw-translate-x), 150px) rotate(180deg); } }
+        .fire-particle { position: absolute; font-size: 24px; pointer-events: none; z-index: 999; text-shadow: 0 0 10px orange; animation: floatUp 0.8s ease-out forwards; }
+        .trash-particle { position: absolute; font-size: 24px; color: #888; pointer-events: none; z-index: 999; animation: fallDown 0.8s ease-in forwards; }
+
+        /* --- EXPLORE & PROFILE GRID --- */
+        .explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding-bottom: 100px; }
+        .explore-item { aspect-ratio: 9/16; position: relative; background: #111; overflow: hidden; cursor: pointer; }
+        .explore-item img, .explore-item video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .explore-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); }
+        
+        .profile-header-card { height: 75%; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #111; background-size: cover; background-position: center; position: relative; }
+        .profile-header-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to top, #000 10%, rgba(0,0,0,0.3) 80%); z-index: 1; }
+        .profile-content-layer { z-index: 2; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+        /* PROFILE TABS */
+        .profile-tabs { display: flex; width: 100%; border-bottom: 1px solid #222; background: black; }
+        .profile-tab { flex: 1; text-align: center; padding: 15px 0; font-size: 11px; font-weight: 800; color: #555; cursor: pointer; letter-spacing: 1px; }
+        .profile-tab.active { color: white; border-bottom: 2px solid white; }
+
+        /* SHEETS & MODALS */
+        .bottom-sheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #1a1a1a; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 300; display: flex; flex-direction: column; border-top: 1px solid #333; max-height: 80%; }
+        .bottom-sheet.open { transform: translateY(0); }
+        .full-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 500; transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+        .full-modal.open { transform: translateX(0); }
+        
+        /* MESSAGING & NOTIFS */
+        .msg-bubble { max-width: 75%; padding: 8px 14px; border-radius: 18px; margin-bottom: 8px; font-size: 13px; font-weight: 500; position: relative; }
+        .msg-me { align-self: flex-end; background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border-bottom-right-radius: 4px; }
+        .msg-other { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 4px; border: 1px solid #333; }
+        
+        .notif-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #222; background: #000; }
+        .notif-item.unread { background: #111; }
+        .comment-item { margin-bottom: 12px; }
+        .comment-reply { margin-left: 40px; border-left: 2px solid #333; padding-left: 10px; margin-top: 5px; }
+        .user-list-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #222; cursor: pointer; }
+        .user-list-item:hover { background: #111; }
+
+        /* NAV */
+        .bottom-nav { height: 75px; background: #000; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 5px; }
+        .nav-item { color: #555; font-size: 22px; cursor: pointer; transition: color 0.2s; display: flex; flex-direction: column; align-items: center; }
+        .nav-item.active { color: white; }
+        .studio-nav-btn { width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444, #991b1b); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); transform: translateY(-5px); }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen">
+    <h1 class="text-5xl font-black italic tracking-tighter mb-2">RapR<span class="text-red-600">.</span></h1>
+    <p class="text-gray-400 text-xs mb-8 tracking-widest font-bold">THE UNDERGROUND</p>
+    <div class="w-full max-w-xs space-y-4">
+        <h2 id="auth-title" class="text-center text-xl font-bold text-white mb-2">CREATE ACCOUNT</h2>
+        <input id="auth-username" type="text" placeholder="Username" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-red-600 font-bold text-center">
+        <input id="auth-password" type="password" placeholder="Password" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-red-600 font-bold text-center">
+        <button id="auth-btn" onclick="handleAuth()" class="w-full bg-white text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest hover:scale-105 transition transform shadow-lg shadow-white/20">SIGN UP</button>
+        <p onclick="toggleAuthMode()" id="auth-toggle-text" class="text-center text-xs text-gray-500 font-bold mt-4 cursor-pointer hover:text-white underline">Already have an account? Login</p>
+    </div>
+    <p class="text-zinc-600 text-[10px] mt-8 font-bold">BY JOINING YOU AGREE TO KEEP IT REAL.</p>
+</div>
+
+<div id="app-container">
+    
+    <div id="top-bar" class="absolute top-0 w-full p-4 pt-5 z-20 flex justify-between items-center bg-transparent pointer-events-none hidden">
+        <div id="top-left-action" class="pointer-events-auto">
+            <div onclick="openSheet('filter-sheet')" class="bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-md cursor-pointer flex items-center gap-2 border border-white/10 hover:bg-white/10">
+                <span id="current-genre-display" class="text-[10px] font-bold text-white tracking-wide">ALL CITY</span>
+                <i class="fas fa-chevron-down text-[8px] text-gray-400"></i>
+            </div>
+        </div>
+        <div id="top-right-action" class="pointer-events-auto flex gap-3">
+            <div onclick="openMessagesList()" class="bg-black/30 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer border border-white/10 relative">
+                <i class="fas fa-paper-plane text-white text-xs"></i>
+                <div id="msg-badge" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border border-black"></div>
+            </div>
+            <div onclick="openModal('settings-modal')" class="bg-black/30 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer border border-white/10 relative">
+                <i class="fas fa-sliders-h text-white text-xs"></i>
+                <div id="notif-badge" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border border-black"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-home" class="view-section active">
+        <div id="feed-container"></div>
+        <div id="no-videos-msg" class="hidden absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-black z-40">
+            <i class="fas fa-search text-4xl text-gray-700 mb-4"></i>
+            <p class="text-gray-500 text-xs font-bold tracking-widest mb-4">NO VIDEOS FOUND</p>
+            <p class="text-gray-600 text-[10px] mb-6">Import a video in the Studio to get started.</p>
+            <button onclick="window.location.reload()" class="bg-white text-black px-6 py-2 rounded-full font-bold text-xs">REFRESH</button>
+        </div>
+    </div>
+
+    <div id="view-explore" class="view-section bg-black overflow-y-auto">
+        <div class="sticky top-0 bg-black/95 z-20 p-4 border-b border-gray-900 backdrop-blur">
+            <div class="relative mb-4">
+                <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+                <input id="search-input" type="text" placeholder="Search hashtags, users..." onkeyup="handleSearch()" class="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3 pl-10 pr-4 text-xs font-bold text-white outline-none focus:border-white">
+            </div>
+        </div>
+        <div class="p-4 pt-0">
+            <div id="explore-results-users" class="mb-6 hidden"></div>
+            <div id="explore-grid" class="explore-grid"></div>
+        </div>
+    </div>
+
+    <div id="view-charts" class="view-section bg-black overflow-y-auto">
+        <div class="p-6 pt-20 pb-0 sticky top-0 bg-black/95 backdrop-blur z-20 border-b border-gray-800">
+            <h2 class="text-3xl font-black italic tracking-tighter">DAILY TOP <span class="text-red-600">.</span></h2>
+            <p class="text-[10px] text-gray-400 font-bold mt-1 tracking-widest mb-4">RANKED BY LIKES TODAY</p>
+            <div class="flex gap-2 overflow-x-auto pb-4">
+                <button onclick="setChartGenre('ALL CITY')" class="chart-pill tag-pill active" data-genre="ALL CITY">ALL CITY</button>
+                <button onclick="setChartGenre('dark plugg')" class="chart-pill tag-pill" data-genre="dark plugg">DARK PLUGG</button>
+                <button onclick="setChartGenre('jerk')" class="chart-pill tag-pill" data-genre="jerk">JERK</button>
+            </div>
+        </div>
+        <div class="pb-24 px-4 pt-4" id="charts-list"></div>
+    </div>
+
+    <div id="view-studio" class="view-section bg-zinc-900">
+        <div class="h-[65%] bg-gray-800 relative overflow-hidden flex items-center justify-center">
+            <video id="studio-preview-video" class="hidden w-full h-full object-cover" playsinline controls muted></video>
+            <div id="studio-preview-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+                <i class="fas fa-video text-4xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 font-bold text-sm tracking-widest mb-2">STUDIO PREVIEW</p>
+                <p class="text-gray-500 text-[11px] max-w-xs">Capture a new clip from your device camera or upload a video file to draft your next drop.</p>
+            </div>
+            <div class="studio-grid">
+                <div class="grid-line w-full h-px top-1/3 absolute bg-white/20"></div>
+                <div class="grid-line w-full h-px top-2/3 absolute bg-white/20"></div>
+                <div class="grid-line h-full w-px left-1/3 absolute bg-white/20"></div>
+                <div class="grid-line h-full w-px left-2/3 absolute bg-white/20"></div>
+            </div>
+            <div id="recording-indicator" class="hidden absolute top-4 left-4 bg-red-600 px-3 py-1 rounded text-[10px] font-bold animate-pulse">REC 00:00</div>
+            <input id="studio-video-input" type="file" accept="video/*" capture="environment" class="hidden" onchange="handleStudioCapture(event)">
+        </div>
+        <div class="h-[35%] bg-black flex flex-col items-center justify-center relative border-t border-gray-800">
+            <div class="absolute -top-6 bg-zinc-900 px-4 py-1.5 rounded-full border border-gray-700 flex items-center gap-2 cursor-pointer">
+                <i class="fas fa-video text-pink-500 text-xs"></i><span class="text-xs font-bold text-white">Camera / Upload</span>
+            </div>
+            <div class="flex w-full justify-around items-center px-10 mb-8 mt-4">
+                <div onclick="openModal('import-modal')" class="text-center cursor-pointer hover:text-white text-gray-500 transition"><i class="fab fa-instagram text-xl mb-1 text-pink-500"></i><p class="text-[9px] font-bold">IMPORT</p></div>
+                <div id="record-btn" class="w-[72px] h-[72px] rounded-full border-4 border-white flex items-center justify-center cursor-pointer" onclick="toggleRecordState()"><div class="w-[56px] h-[56px] bg-red-600 rounded-full transition-all"></div></div>
+                <div class="text-center cursor-pointer hover:text-white text-gray-500 transition"><i class="fas fa-magic text-xl mb-1"></i><p class="text-[9px] font-bold">FX</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view-section bg-black">
+        <div class="h-full overflow-y-auto" style="scroll-snap-type: y mandatory;">
+            <div id="profile-header-container" class="profile-header-card">
+                <div class="profile-header-overlay"></div>
+                <div class="profile-content-layer">
+                    <div class="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-red-600 to-purple-600 mb-4 shadow-2xl">
+                        <img id="profile-avatar-img" src="" class="w-full h-full rounded-full object-cover border-4 border-black bg-black">
+                    </div>
+                    <h2 id="profile-username" class="text-3xl font-black flex items-center drop-shadow-lg">@User <span class="v-badge"></span></h2>
+                    <p id="profile-bio" class="text-sm font-bold text-gray-300 mt-2 max-w-[80%] text-center drop-shadow-md">Loading...</p>
+                    
+                    <button id="profile-edit-btn" onclick="openEditProfile()" class="mt-4 border border-white/20 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-[10px] font-bold hover:bg-white/20 transition hidden">EDIT PROFILE</button>
+                    
+                    <div class="flex gap-2 items-center mt-4">
+                        <button id="profile-msg-btn" onclick="openChatWithUser(state.viewingProfileUser)" class="hidden bg-zinc-800 border border-zinc-700 w-10 h-10 rounded-full flex items-center justify-center text-white"><i class="fas fa-paper-plane text-xs"></i></button>
+                        <button id="profile-follow-btn" onclick="toggleFollow()" class="bg-white text-black px-8 py-2.5 rounded-full text-[11px] font-black tracking-wide hover:scale-105 transition shadow-lg hidden">FOLLOW</button>
+                    </div>
+
+                    <div class="flex gap-8 mt-6">
+                        <div class="text-center drop-shadow-md cursor-pointer" onclick="openUserList('followers')">
+                            <span class="block font-bold text-xl" id="profile-fans-count">0</span>
+                            <span class="text-[9px] text-gray-300 tracking-widest font-bold">FANS</span>
+                        </div>
+                        <div class="text-center drop-shadow-md cursor-pointer" onclick="openUserList('following')">
+                            <span class="block font-bold text-xl" id="profile-following-count">0</span>
+                            <span class="text-[9px] text-gray-300 tracking-widest font-bold">FOLLOWING</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-tabs">
+                <div id="tab-drops" class="profile-tab active" onclick="switchProfileTab('drops')">DROPS</div>
+                <div id="tab-saved" class="profile-tab" onclick="switchProfileTab('saved')">SAVED</div>
+            </div>
+
+            <div class="p-4">
+                <div id="profile-videos-grid" class="explore-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="user-list-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg" id="user-list-title">USERS</h3>
+            <button onclick="closeModal('user-list-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div id="user-list-content" class="p-0 overflow-y-auto h-full"></div>
+    </div>
+
+    <div id="messages-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">MESSAGES</h3>
+            <button onclick="closeModal('messages-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div id="inbox-list" class="p-4 overflow-y-auto h-full"></div>
+    </div>
+
+    <div id="chat-modal" class="full-modal z-[600]">
+        <div class="p-4 pt-12 border-b border-gray-800 flex items-center gap-3 bg-zinc-900/50 backdrop-blur">
+            <button onclick="closeModal('chat-modal')" class="w-8 h-8 rounded-full bg-black flex items-center justify-center"><i class="fas fa-arrow-left text-xs"></i></button>
+            <h3 id="chat-header-user" class="font-bold text-sm flex-1">@User</h3>
+        </div>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 bg-black"></div>
+        <div class="p-3 bg-zinc-900 border-t border-zinc-800 flex gap-2">
+            <input id="chat-input" type="text" placeholder="Message..." class="flex-1 bg-black border border-zinc-700 rounded-full px-4 py-3 text-xs text-white outline-none focus:border-red-600">
+            <button onclick="sendDirectMessage()" class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg"><i class="fas fa-paper-plane text-xs"></i></button>
+        </div>
+    </div>
+
+    <div id="edit-profile-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">EDIT PROFILE</h3>
+            <button onclick="closeModal('edit-profile-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+            <form id="profile-form" onsubmit="handleProfileUpdate(event)">
+                <input type="hidden" name="username" id="edit-username-hidden">
+                <div class="flex flex-col items-center mb-8">
+                    <label class="mb-3 text-xs font-bold text-gray-400 tracking-widest">PROFILE PHOTO</label>
+                    <div class="relative group cursor-pointer w-28 h-28" onclick="document.getElementById('hidden-avatar-input').click()">
+                        <img id="preview-avatar" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-700 group-hover:border-white transition">
+                        <input type="file" id="hidden-avatar-input" name="avatar_file" accept="image/*" class="hidden" onchange="previewImage(this, 'preview-avatar')">
+                    </div>
+                </div>
+                <div class="flex flex-col mb-8">
+                    <label class="mb-3 text-xs font-bold text-gray-400 tracking-widest text-center">HEADER BACKGROUND</label>
+                    <div class="relative group cursor-pointer w-full h-32 rounded-xl overflow-hidden border border-gray-700 group-hover:border-white transition" onclick="document.getElementById('hidden-header-input').click()">
+                        <img id="preview-header" src="" class="w-full h-full object-cover bg-gray-800">
+                        <input type="file" id="hidden-header-input" name="header_file" accept="image/*" class="hidden" onchange="previewImage(this, 'preview-header')">
+                    </div>
+                </div>
+                <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">BIO</p>
+                <textarea name="bio" id="edit-bio-input" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-6 resize-none" rows="3" placeholder="Tell them who you are..."></textarea>
+                <button type="submit" id="save-profile-btn" class="w-full bg-white text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg hover:scale-[1.02] transition">SAVE CHANGES</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="import-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">IMPORT</h3>
+            <button onclick="closeModal('import-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="p-6 flex flex-col items-center justify-center h-[70%]">
+             <form id="import-form" onsubmit="handleImportSubmit(event)" class="w-full">
+                <input type="hidden" name="username" id="import_username_hidden">
+                <input id="import-url-input" type="url" name="videoUrl" placeholder="Paste a direct video URL..." class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-pink-500 mb-4 text-sm">
+                <div class="flex gap-2 justify-center mb-6 text-[10px] font-bold text-gray-500 tracking-widest">
+                    <span><i class="fas fa-link text-pink-500"></i> DIRECT URL</span>
+                    <span><i class="fas fa-file-video text-cyan-400"></i> DEVICE FILE</span>
+                </div>
+                <button type="button" onclick="document.getElementById('import-file-input').click()" class="w-full bg-zinc-900 text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest border border-zinc-700 mb-3">CHOOSE VIDEO FILE</button>
+                <input id="import-file-input" type="file" accept="video/*" class="hidden" onchange="handleImportFile(event)">
+                <button type="submit" id="import-submit-btn" class="w-full bg-white text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest">IMPORT FROM URL</button>
+             </form>
+        </div>
+    </div>
+
+    <div id="post-details-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">FINALIZE DROP</h3>
+            <button onclick="closeModal('post-details-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="p-6 flex flex-col h-full">
+             <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">CAPTION</p>
+             <textarea id="post-caption" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-6 resize-none" rows="4" placeholder="Say something about this track..."></textarea>
+             <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">HASHTAGS (Genre)</p>
+             <input id="post-tags" type="text" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-2" placeholder="#darkplugg #jerk #freestyle">
+             <button id="publish-btn" onclick="savePostDetails()" class="w-full bg-red-600 text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg shadow-red-900/50 hover:bg-red-500 transition">PUBLISH VIDEO</button>
+        </div>
+    </div>
+
+    <div id="comments-sheet" class="bottom-sheet h-[70%]">
+        <div class="sheet-handle w-10 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-2" onclick="closeSheet('comments-sheet')"></div>
+        <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+            <h3 class="font-bold text-sm tracking-wide">COMMENTS</h3>
+            <i class="fas fa-times text-gray-500 cursor-pointer" onclick="closeSheet('comments-sheet')"></i>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="comments-list"></div>
+        <div class="p-4 border-t border-gray-800 flex gap-3 bg-black items-center">
+             <div id="replying-to-indicator" class="hidden text-[10px] text-zinc-500 whitespace-nowrap">Replying... <i class="fas fa-times cursor-pointer ml-1" onclick="cancelReply()"></i></div>
+            <img id="my-comment-avatar" src="" class="w-8 h-8 rounded-full bg-zinc-800">
+            <div class="flex-1 relative">
+                <input type="text" id="comment-input" placeholder="Add a comment..." class="w-full bg-zinc-800 rounded-full px-4 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-red-500">
+                <button onclick="postComment()" class="absolute right-2 top-1.5 text-red-500 font-bold text-xs uppercase">Post</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notifications-sheet" class="bottom-sheet h-[80%]">
+        <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-2" onclick="closeSheet('notifications-sheet')"></div>
+        <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+            <h3 class="font-bold text-sm tracking-wide">ACTIVITY</h3>
+            <i class="fas fa-times text-zinc-500 cursor-pointer" onclick="closeSheet('notifications-sheet')"></i>
+        </div>
+        <div class="flex-1 overflow-y-auto" id="notifications-list"></div>
+    </div>
+
+    <div id="filter-sheet" class="bottom-sheet h-[40%]">
+        <div class="sheet-handle w-10 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-2" onclick="closeSheet('filter-sheet')"></div>
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-xl tracking-tighter">GENRE FILTER</h3>
+                <i class="fas fa-times text-gray-500 cursor-pointer text-xl" onclick="closeSheet('filter-sheet')"></i>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="applyGenre('ALL CITY')" class="tag-pill active border-white bg-white text-black">ALL CITY</button>
+                <button onclick="applyGenre('DARK PLUGG')" class="tag-pill">DARK PLUGG</button>
+                <button onclick="applyGenre('PLUGGNB')" class="tag-pill">PLUGGNB</button>
+                <button onclick="applyGenre('PLUGG')" class="tag-pill">PLUGG</button>
+                <button onclick="applyGenre('JERK')" class="tag-pill">JERK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">SETTINGS</h3>
+            <button onclick="closeModal('settings-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="p-6 space-y-2">
+            <div onclick="openSheet('notifications-sheet'); fetchNotifications();" class="p-4 bg-zinc-900 rounded-xl flex justify-between items-center cursor-pointer border border-zinc-800 hover:border-zinc-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-900/30 flex items-center justify-center text-red-500"><i class="fas fa-bell text-xs"></i></div>
+                    <span class="font-bold text-sm">Notifications</span>
+                </div>
+                <div class="w-2 h-2 bg-red-500 rounded-full hidden" id="menu-notif-dot"></div>
+            </div>
+            <button onclick="handleLogout()" class="w-full py-4 mt-8 text-red-500 font-bold text-xs uppercase bg-zinc-900 rounded-xl border border-zinc-800">Log Out</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="switchView('home')"><i class="fas fa-home"></i></div>
+        <div class="nav-item" id="nav-explore" onclick="switchView('explore')"><i class="fas fa-search"></i></div>
+        <div class="nav-item" id="nav-studio" onclick="switchView('studio')"><div class="studio-nav-btn"><i class="fas fa-plus"></i></div></div>
+        <div class="nav-item" id="nav-charts" onclick="switchView('charts')"><i class="fas fa-chart-bar"></i></div>
+        <div class="nav-item" id="nav-profile" onclick="switchToMyProfile()"><i class="fas fa-user"></i></div>
+    </div>
+
+</div>
+
+<script>
+    const VERIFIED_SVG = `<svg class="verified-icon" viewBox="0 0 24 24" fill="none"><path d="M22.5 12.0001C22.5 10.7001 22.0227 9.53945 21.2386 8.63605L21.825 7.02505C21.9841 6.5863 21.825 6.09505 21.4273 5.82945L20.0477 4.90895C20.0205 3.7158 19.3307 2.6612 18.2705 2.13055L17.1568 1.01693C16.8386 0.698745 16.3875 0.56602 15.9455 0.66147L14.4068 1.00238C13.5841 0.453295 12.5932 0.13623 11.5341 0.13623C10.475 0.13623 9.48409 0.453295 8.66136 1.00238L7.12273 0.66147C6.68068 0.56602 6.22955 0.698745 5.91136 1.01693L4.79773 2.13055C3.7375 2.6612 3.04773 3.7158 3.02045 4.90895L1.64091 5.82945C1.24318 6.09505 1.08409 6.5863 1.24318 7.02505L1.82955 8.63605C1.04545 9.53945 0.568182 10.7001 0.568182 12.0001C0.568182 13.3001 1.04545 14.4607 1.82955 15.3641L1.24318 16.9752C1.08409 17.4139 1.24318 17.9052 1.64091 18.1708L3.02045 19.0913C3.04773 20.2844 3.7375 21.339 4.79773 21.8696L5.91136 22.9833C6.22955 23.3015 6.68068 23.4342 7.12273 23.3387L8.66136 22.9978C9.48409 23.5469 10.475 23.864 11.5341 23.864C12.5932 23.864 13.5841 23.5469 14.4068 22.9978L15.9455 23.3387C16.3875 23.4342 16.8386 23.3015 17.1568 22.9833L18.2705 21.8696C19.3307 21.339 20.0205 20.2844 20.0477 19.0913L21.4273 18.1708C21.825 17.9052 21.9841 17.4139 21.825 16.9752L21.2386 15.3641C22.0227 14.4607 22.5 13.3001 22.5 12.0001Z" fill="white"/><path d="M16.5 8.5L10.5 14.5L7.5 11.5" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    let state = {
+        feed: [], displayFeed: [], currentGridFeed: [], currentIndex: 0, currentUser: null, authToken: null, usersDb: {},
+        currentView: 'home', currentChartGenre: 'ALL CITY', currentGenreFilter: 'ALL CITY', pendingEditVideo: null, pendingUploadFile: null, pendingPreviewUrl: null, authMode: 'register',
+        viewingProfileUser: null,
+        isGlobalMuted: true,
+        saved: [],
+        currentProfileTab: 'drops',
+        replyingToId: null, chatPollInterval: null, notificationPollInterval: null
+    };
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function jsString(value) {
+        return JSON.stringify(String(value ?? ''));
+    }
+
+    function sanitizeUrl(value, fallback = '') {
+        const candidate = String(value || '').trim();
+        if (!candidate) return fallback;
+        if (/^(https?:|blob:|data:)/i.test(candidate)) return candidate;
+        if (candidate.startsWith('/')) return candidate;
+        return `/${candidate.replace(/^\/+/, '')}`;
+    }
+
+    function normalizeTagsInput(value) {
+        return String(value || '')
+            .split(/\s+/)
+            .map(tag => tag.trim().replace(/^#/, '').toLowerCase())
+            .filter(Boolean)
+            .slice(0, 8);
+    }
+
+    function setStoredAuth(username, token) {
+        localStorage.setItem('rapr_user', username);
+        localStorage.setItem('rapr_token', token);
+    }
+
+    function clearStoredAuth() {
+        localStorage.removeItem('rapr_user');
+        localStorage.removeItem('rapr_token');
+    }
+
+    function resetPendingVideo() {
+        if (state.pendingPreviewUrl && state.pendingPreviewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(state.pendingPreviewUrl);
+        }
+
+        state.pendingPreviewUrl = null;
+        state.pendingEditVideo = null;
+        state.pendingUploadFile = null;
+        document.getElementById('studio-video-input').value = '';
+        document.getElementById('import-file-input').value = '';
+    }
+
+    function getAuthHeaders(existingHeaders = {}) {
+        return state.authToken
+            ? { ...existingHeaders, Authorization: `Bearer ${state.authToken}` }
+            : existingHeaders;
+    }
+
+    async function apiRequest(url, options = {}) {
+        const requestOptions = {
+            method: options.method || 'GET',
+            headers: getAuthHeaders(options.headers || {})
+        };
+
+        if (options.body instanceof FormData) {
+            requestOptions.body = options.body;
+        } else if (options.body !== undefined) {
+            requestOptions.headers = getAuthHeaders({
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            });
+            requestOptions.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(url, requestOptions);
+        let payload = null;
+
+        try {
+            payload = await response.json();
+        } catch (error) {
+            payload = null;
+        }
+
+        if (response.status === 401) {
+            handleLogout(false);
+            document.getElementById('auth-screen').style.display = 'flex';
+            throw new Error(payload?.message || 'Please log in again.');
+        }
+
+        if (!response.ok || (payload && typeof payload === 'object' && payload.success === false)) {
+            throw new Error(payload?.message || payload?.error || 'Request failed.');
+        }
+
+        return payload;
+    }
+
+    function getGenreFilteredFeed(source = state.feed) {
+        if (state.currentGenreFilter === 'ALL CITY') return [...source];
+        const genre = state.currentGenreFilter.toLowerCase();
+        return source.filter(video => Array.isArray(video.tags) && video.tags.some(tag => String(tag).toLowerCase().includes(genre)));
+    }
+
+    function updateGenreFilterUi() {
+        document.getElementById('current-genre-display').innerText = state.currentGenreFilter;
+        document.querySelectorAll('#filter-sheet .tag-pill').forEach(button => {
+            const isActive = button.innerText.trim().toUpperCase() === state.currentGenreFilter;
+            button.classList.toggle('active', isActive);
+            button.classList.toggle('border-white', isActive);
+            button.classList.toggle('bg-white', isActive);
+            button.classList.toggle('text-black', isActive);
+        });
+    }
+
+    function updateStudioPreview(videoUrl) {
+        const preview = document.getElementById('studio-preview-video');
+        const placeholder = document.getElementById('studio-preview-placeholder');
+
+        if (!videoUrl) {
+            preview.pause();
+            preview.removeAttribute('src');
+            preview.load();
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            return;
+        }
+
+        preview.src = sanitizeUrl(videoUrl);
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        preview.load();
+    }
+
+    function queuePendingVideo(file, previewUrl, filename = '') {
+        resetPendingVideo();
+        state.pendingUploadFile = file || null;
+        state.pendingEditVideo = { video: previewUrl, filename };
+        if (previewUrl && previewUrl.startsWith('blob:')) state.pendingPreviewUrl = previewUrl;
+        updateStudioPreview(previewUrl);
+    }
+
+    function init() {
+        const storedUser = localStorage.getItem('rapr_user');
+        const storedToken = localStorage.getItem('rapr_token');
+
+        if (!storedUser || !storedToken) {
+            clearStoredAuth();
+            document.getElementById('auth-screen').style.display = 'flex';
+            updateGenreFilterUi();
+            updateStudioPreview('');
+            return;
+        }
+
+        state.currentUser = storedUser;
+        state.authToken = storedToken;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('import_username_hidden').value = state.currentUser;
+        document.getElementById('edit-username-hidden').value = state.currentUser;
+        document.getElementById('my-comment-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser)}&background=333&color=fff`;
+        updateGenreFilterUi();
+        updateStudioPreview('');
+        loadData();
+        startNotificationPolling();
+    }
+
+    // --- AUTH ---
+    function toggleAuthMode() {
+        const title = document.getElementById('auth-title');
+        const btn = document.getElementById('auth-btn');
+        const toggle = document.getElementById('auth-toggle-text');
+        
+        if (state.authMode === 'register') {
+            state.authMode = 'login';
+            title.innerText = "WELCOME BACK";
+            btn.innerText = "LOGIN";
+            toggle.innerText = "New here? Sign Up";
+        } else {
+            state.authMode = 'register';
+            title.innerText = "CREATE ACCOUNT";
+            btn.innerText = "SIGN UP";
+            toggle.innerText = "Already have an account? Login";
+        }
+    }
+
+    async function handleAuth() {
+        const u = document.getElementById('auth-username').value.trim();
+        const p = document.getElementById('auth-password').value;
+        if (!u || !p) return alert("Please fill all fields");
+        document.getElementById('auth-btn').innerText = "LOADING...";
+        try {
+            const data = await apiRequest('/api/auth', {
+                method: 'POST',
+                body: { action: state.authMode, username: u, password: p }
+            });
+            state.currentUser = data.user.username;
+            state.authToken = data.token;
+            setStoredAuth(data.user.username, data.token);
+            window.location.reload();
+        } catch(e) { alert(e.message || "Connection Error"); }
+        document.getElementById('auth-btn').innerText = state.authMode === 'register' ? "SIGN UP" : "LOGIN";
+    }
+
+    function handleLogout(shouldReload = true) {
+        clearStoredAuth();
+        resetPendingVideo();
+        if (state.chatPollInterval) {
+            clearInterval(state.chatPollInterval);
+            state.chatPollInterval = null;
+        }
+        if (state.notificationPollInterval) {
+            clearInterval(state.notificationPollInterval);
+            state.notificationPollInterval = null;
+        }
+        state.currentUser = null;
+        state.authToken = null;
+        if (shouldReload) window.location.reload();
+    }
+
+    // --- DATA ---
+    async function loadData() {
+        try {
+            const db = await apiRequest('/api/feed?user=' + encodeURIComponent(state.currentUser) + '&t=' + Date.now());
+            state.feed = Array.isArray(db) ? db.map(v => ({
+                ...v,
+                id: String(v.id || v.video || ''),
+                tags: v.tags || ['rap'],
+                likes: Number(v.likes || 0),
+                verified: true,
+                comments: v.comments || [],
+                comments_count: Number(v.comments_count || 0),
+                username: v.username || 'Unknown',
+                video: sanitizeUrl(v.video || '')
+            })) : [];
+
+            state.saved = [];
+            state.usersDb = {};
+
+            state.feed.forEach(v => {
+                state.usersDb[v.username] = {
+                    username: v.username,
+                    avatar: v.avatar,
+                    bio: v.bio,
+                    header: v.header || ''
+                };
+                if (v.has_saved) {
+                    const vidId = String(v.id || v.video);
+                    if (!state.saved.includes(vidId)) state.saved.push(vidId);
+                }
+            });
+        } catch(e) { console.log("Feed Fetch Error", e); }
+
+        state.displayFeed = getGenreFilteredFeed();
+        const sharedVideoId = new URLSearchParams(window.location.search).get('video');
+        if (sharedVideoId) {
+            const idx = state.displayFeed.findIndex(v => String(v.id) === String(sharedVideoId));
+            if (idx >= 0) state.currentIndex = idx;
+        }
+        renderApp();
+    }
+
+    function renderApp() {
+        const topBar = document.getElementById('top-bar');
+        if(state.currentView === 'home') topBar.classList.remove('hidden');
+        updateGenreFilterUi();
+        updateCharts();
+        renderExploreGrid(); 
+        renderFeed();
+    }
+
+    /* --- PROFILE --- */
+    function openUserProfile(username) {
+        if(!username) return;
+        state.viewingProfileUser = username;
+        state.currentProfileTab = 'drops';
+        document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-drops').classList.add('active');
+        switchView('profile');
+        
+        // Instant UI Reset
+        document.getElementById('profile-username').innerHTML = `@${escapeHtml(username)} ${VERIFIED_SVG}`;
+        document.getElementById('profile-bio').innerText = "Loading...";
+        document.getElementById('profile-avatar-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=000&color=fff`;
+        document.getElementById('profile-header-container').style.backgroundImage = 'none';
+        document.getElementById('profile-header-container').style.backgroundColor = '#111';
+        document.getElementById('profile-videos-grid').innerHTML = '';
+        
+        // Buttons
+        const isMe = username === state.currentUser;
+        document.getElementById('profile-edit-btn').classList.toggle('hidden', !isMe);
+        document.getElementById('profile-follow-btn').classList.toggle('hidden', isMe);
+        document.getElementById('profile-msg-btn').classList.toggle('hidden', isMe);
+
+        fetchProfileData(username);
+    }
+
+    async function fetchProfileData(username) {
+        try {
+            const data = await apiRequest(`/api/profile?user=${encodeURIComponent(username)}&viewer=${encodeURIComponent(state.currentUser)}&t=${Date.now()}`);
+            
+            if(!data || !data.username) {
+                document.getElementById('profile-bio').innerText = "User not found.";
+                return;
+            }
+
+            document.getElementById('profile-bio').innerText = data.bio || "No bio yet.";
+            document.getElementById('profile-fans-count').innerText = data.followers_count;
+            document.getElementById('profile-following-count').innerText = data.following_count;
+            
+            // Only update images if data exists, otherwise keep placeholder
+            if(data.avatar) document.getElementById('profile-avatar-img').src = sanitizeUrl(data.avatar);
+            if(data.header) document.getElementById('profile-header-container').style.backgroundImage = `url('${sanitizeUrl(data.header)}')`;
+            
+            const btn = document.getElementById('profile-follow-btn');
+            if(data.is_following) {
+                btn.innerText = "FOLLOWING";
+                btn.classList.add('bg-zinc-800', 'text-white', 'border', 'border-zinc-700');
+                btn.classList.remove('bg-white', 'text-black');
+            } else {
+                btn.innerText = "FOLLOW";
+                btn.classList.add('bg-white', 'text-black');
+                btn.classList.remove('bg-zinc-800', 'text-white', 'border', 'border-zinc-700');
+            }
+            renderProfileVideos();
+        } catch(e) { 
+            console.error(e);
+            document.getElementById('profile-bio').innerText = "Failed to load."; 
+        }
+    }
+
+    function renderProfileVideos() {
+        const grid = document.getElementById('profile-videos-grid');
+        grid.innerHTML = '';
+        const userVideos = state.feed.filter(v => v.username === state.viewingProfileUser);
+        const savedVideos = state.feed.filter(v => state.saved.includes(String(v.id)));
+        
+        const source = state.currentProfileTab === 'drops' ? userVideos : savedVideos;
+
+        if(source.length === 0) {
+            grid.innerHTML = '<p class="text-zinc-500 text-xs col-span-2 text-center mt-8">No videos yet.</p>';
+            return;
+        }
+
+        source.forEach((item, i) => {
+            grid.innerHTML += `<div class="explore-item" onclick='openUserProfileVideo(${jsString(item.id)})'><video src="${sanitizeUrl(item.video)}" muted></video><div class="explore-overlay"><p class="text-[10px] font-bold">@${escapeHtml(item.username)}</p></div></div>`;
+        });
+    }
+
+    function openUserProfileVideo(id) {
+        let idx = state.displayFeed.findIndex(v => v.id == id);
+        if(idx === -1) {
+            state.currentGenreFilter = 'ALL CITY';
+            state.displayFeed = [...state.feed];
+            updateGenreFilterUi();
+            idx = state.displayFeed.findIndex(v => v.id == id);
+        }
+        if(idx !== -1) {
+            state.currentIndex = idx;
+            switchView('home');
+            renderFeed();
+        }
+    }
+
+    function switchToMyProfile() { openUserProfile(state.currentUser); }
+
+    function switchProfileTab(tab) {
+        state.currentProfileTab = tab;
+        document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        renderProfileVideos();
+    }
+
+    async function openEditProfile() {
+        try {
+            const data = await apiRequest(`/api/profile?user=${encodeURIComponent(state.currentUser)}&viewer=${encodeURIComponent(state.currentUser)}&t=${Date.now()}`);
+            document.getElementById('edit-bio-input').value = data.bio || '';
+            document.getElementById('preview-avatar').src = sanitizeUrl(data.avatar || '');
+            document.getElementById('preview-header').src = sanitizeUrl(data.header || '');
+            openModal('edit-profile-modal');
+        } catch(err) { alert(err.message || "Could not load your profile"); }
+    }
+
+    /* --- PROFILE UPDATE --- */
+    function previewImage(input, imgId) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById(imgId).src = e.target.result; }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function handleProfileUpdate(e) {
+        e.preventDefault();
+        const btn = document.getElementById('save-profile-btn');
+        btn.innerText = "SAVING...";
+        const form = document.getElementById('profile-form');
+        const fd = new FormData(form);
+        
+        try {
+            await apiRequest('/api/profile/update', { method: 'POST', body: fd });
+            closeModal('edit-profile-modal');
+            await loadData();
+            if (state.viewingProfileUser === state.currentUser) await fetchProfileData(state.currentUser);
+        } catch(err) { alert(err.message || "Error saving"); }
+        btn.innerText = "SAVE CHANGES";
+    }
+
+    /* --- FOLLOW (OPTIMISTIC) --- */
+    async function toggleFollow() {
+        const target = state.viewingProfileUser;
+        const btn = document.getElementById('profile-follow-btn');
+        if(!target || target === state.currentUser) return;
+        
+        const isFollowingCurrently = btn.innerText === "FOLLOWING";
+        
+        if(isFollowingCurrently) {
+            btn.innerText = "FOLLOW";
+            btn.classList.add('bg-white', 'text-black');
+            btn.classList.remove('bg-zinc-800', 'text-white', 'border', 'border-zinc-700');
+        } else {
+            btn.innerText = "FOLLOWING";
+            btn.classList.add('bg-zinc-800', 'text-white', 'border', 'border-zinc-700');
+            btn.classList.remove('bg-white', 'text-black');
+        }
+        
+        try {
+            await apiRequest('/api/interact', {
+                method: 'POST',
+                body: { action: 'follow', target_username: target }
+            });
+            fetchProfileData(target);
+        } catch(e) { btn.innerText = "ERROR"; }
+    }
+
+    /* --- USER LISTS --- */
+    async function openUserList(type) {
+        const target = state.viewingProfileUser || state.currentUser;
+        document.getElementById('user-list-title').innerText = type.toUpperCase();
+        const list = document.getElementById('user-list-content');
+        list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">Loading...</p>';
+        openModal('user-list-modal');
+
+        const action = type === 'followers' ? 'get_followers' : 'get_following';
+        const users = await apiRequest(`/api/interact?action=${action}&target=${encodeURIComponent(target)}`);
+
+        list.innerHTML = '';
+        if(users.length === 0) {
+            list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">No users found.</p>';
+            return;
+        }
+        users.forEach(u => {
+            const avatar = sanitizeUrl(u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=000&color=fff`);
+            list.innerHTML += `
+                <div class="user-list-item" onclick='closeModal("user-list-modal"); openUserProfile(${jsString(u.username)})'>
+                    <div class="w-10 h-10 rounded-full overflow-hidden mr-3 border border-zinc-800"><img src="${avatar}" class="w-full h-full object-cover"></div>
+                    <div><p class="text-xs font-bold text-white">@${escapeHtml(u.username)}</p><p class="text-[10px] text-zinc-500">${escapeHtml(u.bio || 'Artist')}</p></div>
+                </div>`;
+        });
+    }
+
+    /* --- SAVE --- */
+    async function toggleSave(videoId, btnElement) {
+        const vId = String(videoId);
+        const icon = btnElement.querySelector('i');
+        const isSaved = state.saved.includes(vId);
+
+        if (isSaved) {
+            state.saved = state.saved.filter(id => id !== vId);
+            icon.classList.remove('fas', 'text-yellow-400', 'saved');
+            icon.classList.add('far', 'text-white');
+            // Remove from saved tab if viewed there
+            if(state.currentProfileTab === 'saved') renderProfileVideos();
+        } else {
+            state.saved.push(vId);
+            icon.classList.remove('far', 'text-white');
+            icon.classList.add('fas', 'text-yellow-400', 'saved');
+        }
+        try {
+            await apiRequest('/api/interact', {
+                method: 'POST',
+                body: { action: 'save', id: vId }
+            });
+        } catch(err) {
+            alert(err.message || "Could not save");
+        }
+    }
+
+    /* --- DELETE VIDEO --- */
+    async function deleteVideo(id) {
+        if(!confirm("Are you sure you want to delete this drop? This cannot be undone.")) return;
+        
+        try {
+            await apiRequest('/api/interact', {
+                method: 'POST',
+                body: { action: 'delete_video', id }
+            });
+            state.feed = state.feed.filter(v => (v.id || v.video) != id);
+            state.displayFeed = state.displayFeed.filter(v => (v.id || v.video) != id);
+            if(state.currentIndex >= state.displayFeed.length) state.currentIndex = 0;
+            renderFeed();
+            renderExploreGrid();
+            renderProfileVideos();
+        } catch(e) { console.error(e); }
+    }
+
+    /* --- PLAYBACK --- */
+    function renderFeed() {
+        const container = document.getElementById('feed-container');
+        const emptyMsg = document.getElementById('no-videos-msg');
+        container.innerHTML = '';
+        
+        if (state.displayFeed.length === 0) { 
+            emptyMsg.classList.remove('hidden'); 
+            return; 
+        }
+        emptyMsg.classList.add('hidden');
+
+        if (state.currentIndex >= state.displayFeed.length) state.currentIndex = 0;
+        const data = state.displayFeed[state.currentIndex];
+        
+        // Sanity Check
+        if (!data) return;
+
+        const vidId = String(data.id || data.video);
+        const authorData = state.usersDb[data.username] || {};
+        const authorAvatar = sanitizeUrl(data.avatar || authorData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=000&color=fff`);
+        const isSaved = state.saved.includes(vidId) ? 'fas text-yellow-400 saved' : 'far text-white';
+        const isLiked = data.has_liked ? 'liked text-red-600' : 'text-white';
+        const tagsHtml = data.tags ? data.tags.map(t => `<span onclick='event.stopPropagation(); openExploreTag(${jsString(t)})' class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-white/40 transition">#${escapeHtml(t)}</span>`).join('') : '';
+
+        // --- NEW: CHECK IF USER OWNS VIDEO ---
+        let deleteBtnHTML = '';
+        if (data.username === state.currentUser) {
+            deleteBtnHTML = `
+                <div class="action-btn" onclick='deleteVideo(${jsString(vidId)})'>
+                    <div class="action-icon-bg" style="background:rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.5);">
+                        <i class="fas fa-trash text-red-500 text-lg"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-red-500 drop-shadow-md">Del</span>
+                </div>`;
+        }
+
+        const el = document.createElement('div');
+        el.className = 'video-card';
+        el.id = 'active-card';
+        el.innerHTML = `
+            <video playsinline loop class="w-full h-full object-cover" src="${sanitizeUrl(data.video)}"></video>
+            <div id="mute-btn" onclick="toggleMute(event)" class="absolute top-24 right-4 z-50 bg-black/40 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 pointer-events-auto cursor-pointer"><i class="fas fa-volume-up text-white text-sm"></i></div>
+            <div class="gesture-layer"></div><div class="overlay-gradient"></div>
+            <div class="center-play-icon"><i class="fas fa-play"></i></div><div class="stamp stamp-fire">FIRE</div><div class="stamp stamp-trash">TRASH</div>
+            <div class="interaction-column">
+                <div class="action-btn" onclick='openUserProfile(${jsString(data.username)})'><div class="w-12 h-12 rounded-full border-2 border-white mb-4 overflow-hidden shadow-lg"><img src="${authorAvatar}" class="w-full h-full object-cover"></div></div>
+                <div class="action-btn" onclick="likeVideo(${state.currentIndex})"><div class="action-icon-bg"><i class="fas fa-heart text-2xl ${isLiked}" id="like-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md" id="like-count">${data.likes}</span></div>
+                <div class="action-btn" onclick='openComments(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-comment-dots text-white text-xl"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">${data.comments_count || 0}</span></div>
+                <div class="action-btn" onclick='toggleSave(${jsString(vidId)}, this)'><div class="action-icon-bg"><i class="${isSaved} fa-bookmark text-xl transition-all duration-200" id="save-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Save</span></div>
+                <div class="action-btn" onclick='shareVideo(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-share text-white text-xl"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Share</span></div>
+                ${deleteBtnHTML}
+            </div>
+            <div class="absolute bottom-24 left-5 max-w-[70%] pointer-events-none text-shadow-md z-30">
+                <h2 onclick='openUserProfile(${jsString(data.username)})' class="text-xl font-black mb-1 drop-shadow-lg text-white tracking-tight flex items-center cursor-pointer hover:text-gray-200 transition pointer-events-auto">@${escapeHtml(data.username)} ${VERIFIED_SVG}</h2>
+                <p class="text-gray-200 text-xs font-bold leading-relaxed drop-shadow-md opacity-90 mb-2">${escapeHtml(data.bio || '')}</p>
+                <div class="flex gap-2 flex-wrap pointer-events-auto">${tagsHtml}</div>
+            </div>`;
+        container.appendChild(el);
+        initHammer(el);
+        const vid = el.querySelector('video');
+        vid.muted = state.isGlobalMuted; updateMuteIcon(state.isGlobalMuted);
+        
+        // Auto-play logic
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                // Auto-play prevented
+                vid.muted = true; 
+                state.isGlobalMuted = true; 
+                updateMuteIcon(true); 
+                vid.play(); 
+            });
+        }
+    }
+
+    function toggleMute(e) { e.stopPropagation(); const vid = document.querySelector('#active-card video'); if(vid) { vid.muted = !vid.muted; state.isGlobalMuted = vid.muted; updateMuteIcon(vid.muted); } }
+    function updateMuteIcon(muted) { const i = document.querySelector('#mute-btn i'); if(i) i.className = muted ? 'fas fa-volume-mute text-white text-sm' : 'fas fa-volume-up text-white text-sm'; }
+    
+    function initHammer(el) {
+        const mc = new Hammer(el.querySelector('.gesture-layer')); mc.get('pan').set({ direction: Hammer.DIRECTION_ALL }); mc.on("tap", togglePlay);
+        mc.on("pan", (ev) => {
+            if(Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) {
+                el.style.transform = `translate(${ev.deltaX}px, ${ev.deltaY}px) rotate(${ev.deltaX*0.05}deg)`;
+                if(ev.deltaX>0) { el.querySelector('.stamp-fire').style.opacity = Math.min(ev.deltaX/100,1); el.querySelector('.stamp-trash').style.opacity=0; }
+                else { el.querySelector('.stamp-trash').style.opacity = Math.min(Math.abs(ev.deltaX)/100,1); el.querySelector('.stamp-fire').style.opacity=0; }
+            } else { el.style.transform = `translate(0px, ${ev.deltaY}px)`; el.querySelector('.stamp-fire').style.opacity=0; el.querySelector('.stamp-trash').style.opacity=0; }
+        });
+        mc.on("panend", (ev) => {
+            if(Math.abs(ev.deltaX) > 80) { if(ev.deltaX>0) likeVideo(state.currentIndex); animateExit(el, ev.deltaX>0?'right':'left'); }
+            else if(Math.abs(ev.deltaY) > 80) animateExit(el, ev.deltaY>0?'down':'up');
+            else { el.style.transform = ''; el.querySelector('.stamp-fire').style.opacity=0; el.querySelector('.stamp-trash').style.opacity=0; }
+        });
+    }
+    function togglePlay() { const vid = document.querySelector('#active-card video'); if(vid.paused) { vid.play(); document.getElementById('active-card').classList.remove('paused'); } else { vid.pause(); document.getElementById('active-card').classList.add('paused'); } }
+    function animateExit(el, dir) {
+        el.style.transition = 'transform 0.3s ease-out';
+        if(dir=='right') el.style.transform = `translate(${window.innerWidth}px, 50px) rotate(20deg)`;
+        if(dir=='left') el.style.transform = `translate(-${window.innerWidth}px, 50px) rotate(-20deg)`;
+        if(dir=='up') el.style.transform = `translateY(-100%)`; if(dir=='down') el.style.transform = `translateY(100%)`;
+        setTimeout(() => { 
+            if(dir=='down') state.currentIndex = (state.currentIndex - 1 + state.displayFeed.length) % state.displayFeed.length; 
+            else state.currentIndex = (state.currentIndex + 1) % state.displayFeed.length; 
+            renderFeed(); 
+        }, 300);
+    }
+    async function likeVideo(idx) {
+        const vid = state.displayFeed[idx]; if(vid.has_liked) return; vid.likes++; vid.has_liked = true;
+        document.getElementById('like-count').innerText = vid.likes; document.getElementById('like-icon').classList.add('text-red-600', 'liked');
+        try {
+            await apiRequest('/api/interact', {
+                method: 'POST',
+                body: { action: 'like', id: vid.id || vid.video }
+            });
+        } catch(err) {
+            vid.likes--;
+            vid.has_liked = false;
+            renderFeed();
+            alert(err.message || "Could not like video");
+        }
+    }
+
+    let currentVideoIdForComments = null;
+    async function openComments(vidId) {
+        currentVideoIdForComments = vidId; openSheet('comments-sheet'); const list = document.getElementById('comments-list'); list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">Loading...</p>';
+        const comments = await apiRequest(`/api/interact?action=get_comments&video_id=${encodeURIComponent(vidId)}`); list.innerHTML = '';
+        if(comments.length===0) list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">No comments yet.</p>';
+        comments.filter(c=>!c.parent_id).forEach(c => { list.innerHTML+=renderCommentHTML(c, false); comments.filter(r=>r.parent_id===c.id).forEach(r=>list.innerHTML+=renderCommentHTML(r,true)); });
+    }
+    function renderCommentHTML(c, isReply) {
+        const heartClass = c.has_liked ? 'fas text-red-500 comment-heart-active' : 'far text-zinc-500';
+        return `<div class="comment-item ${isReply?'comment-reply':''} flex gap-3"><div class="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0"><img src="${sanitizeUrl(c.avatar || 'https://ui-avatars.com/api/?name='+encodeURIComponent(c.username))}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between items-start"><p class="text-xs font-bold text-zinc-400">@${escapeHtml(c.username)}</p><div class="flex gap-3 text-[10px] text-zinc-500"><span onclick='likeComment(${jsString(c.id)}, this)' class="cursor-pointer flex items-center gap-1 group"><i class="${heartClass} transition-transform duration-200"></i> <span class="count">${c.likes}</span></span></div></div><p class="text-xs text-white mt-0.5">${escapeHtml(c.text)}</p><p onclick='prepareReply(${jsString(c.id)}, ${jsString(c.username)})' class="text-[9px] font-bold text-zinc-600 mt-1 cursor-pointer hover:text-white">REPLY</p></div></div>`;
+    }
+    function prepareReply(id, user) { state.replyingToId = id; const ind = document.getElementById('replying-to-indicator'); ind.innerHTML = `Replying to @${escapeHtml(user)} <i class="fas fa-times cursor-pointer ml-1" onclick="cancelReply()"></i>`; ind.classList.remove('hidden'); document.getElementById('comment-input').focus(); }
+    function cancelReply() { state.replyingToId = null; document.getElementById('replying-to-indicator').classList.add('hidden'); }
+    async function postComment() {
+        const txt = document.getElementById('comment-input').value; if(!txt) return;
+        document.getElementById('comment-input').value = ''; cancelReply();
+        
+        // Optimistic Update: Update local count immediately
+        const vid = state.feed.find(v => (v.id||v.video) == currentVideoIdForComments);
+        if(vid) vid.comments_count = (vid.comments_count || 0) + 1;
+        
+        await apiRequest('/api/interact', {
+            method: 'POST',
+            body: { action: 'comment', id: currentVideoIdForComments, text: txt, parent_id: state.replyingToId }
+        });
+        openComments(currentVideoIdForComments);
+    }
+    async function likeComment(cid, el) {
+        const icon = el.querySelector('i'); 
+        if(icon.classList.contains('comment-heart-active')) return;
+        icon.classList.remove('far', 'text-zinc-500'); 
+        icon.classList.add('fas', 'comment-heart-active');
+        el.querySelector('.count').innerText = parseInt(el.querySelector('.count').innerText)+1;
+        await apiRequest('/api/interact', {
+            method: 'POST',
+            body: { action: 'like_comment', comment_id: cid }
+        });
+    }
+
+    // --- OTHER ---
+    function updateCharts() {
+        const list = document.getElementById('charts-list'); list.innerHTML = '';
+        let filtered = state.currentChartGenre === 'ALL CITY' ? state.feed : state.feed.filter(v => v.tags.some(t => t.includes(state.currentChartGenre.toLowerCase())));
+        if(filtered.length === 0) { list.innerHTML = `<p class="text-center text-gray-500 text-xs mt-10">No videos.</p>`; return; }
+        filtered.sort((a,b) => b.likes - a.likes).slice(0, 10).forEach((item, i) => {
+            list.innerHTML += `<div class="flex items-center py-4 border-b border-gray-900"><span class="w-8 text-2xl font-black italic ${i==0?'text-yellow-400':(i==1?'text-gray-300':'text-orange-400')}">#${i+1}</span><div class="flex-1 ml-4 cursor-pointer" onclick='openUserProfile(${jsString(item.username)})'><p class="font-bold text-sm hover:text-gray-300 transition">@${escapeHtml(item.username)} ${VERIFIED_SVG}</p><p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">${item.likes} LIKES</p></div></div>`;
+        });
+    }
+    function switchView(view) {
+        state.currentView = view;
+        document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+        document.getElementById('view-'+view).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        if(view!=='studio') document.getElementById('nav-'+view)?.classList.add('active');
+        const topBar = document.getElementById('top-bar');
+        const vid = document.querySelector('#active-card video');
+        if(view !== 'home') { if(vid) vid.pause(); } else { if(vid) vid.play().catch(() => {}); }
+        if(view==='home'||view==='charts') topBar.classList.remove('hidden'); else topBar.classList.add('hidden');
+    }
+    function openSheet(id) { document.getElementById(id).classList.add('open'); }
+    function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); if(id === 'chat-modal' && state.chatPollInterval) { clearInterval(state.chatPollInterval); state.chatPollInterval = null; } }
+    function setChartGenre(g) { state.currentChartGenre = g; updateCharts(); document.querySelectorAll('.chart-pill').forEach(b => { b.classList.remove('active', 'bg-white', 'text-black', 'border-white'); if(b.dataset.genre === g) b.classList.add('active', 'bg-white', 'text-black', 'border-white'); }); }
+    function openExploreTag(t) { switchView('explore'); document.getElementById('search-input').value=t; handleSearch(); }
+    function applyGenre(genre) { state.currentGenreFilter = genre; state.displayFeed = getGenreFilteredFeed(); state.currentIndex = 0; updateGenreFilterUi(); closeSheet('filter-sheet'); renderFeed(); renderExploreGrid(); }
+    
+    // --- MESSAGING ---
+    async function openMessagesList() {
+        openModal('messages-modal'); const list = document.getElementById('inbox-list'); list.innerHTML = '<p class="text-center text-zinc-600 text-xs mt-4">Loading...</p>';
+        const chats = await apiRequest('/api/interact?action=get_chats'); list.innerHTML = '';
+        if(chats.length===0) list.innerHTML = '<p class="text-center text-zinc-600 text-xs mt-4">No messages yet.</p>';
+        chats.forEach(c => { const other = c.sender === state.currentUser ? c.receiver : c.sender; list.innerHTML += `<div onclick='openChatWithUser(${jsString(other)})' class="flex gap-4 p-4 border-b border-zinc-900 cursor-pointer hover:bg-zinc-900 transition"><div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lg">${escapeHtml(other[0].toUpperCase())}</div><div><p class="font-bold text-sm">@${escapeHtml(other)}</p><p class="text-xs text-zinc-500 truncate w-48">${escapeHtml(c.last_msg)}</p></div></div>`; });
+    }
+    let currentChatUser = null;
+    function openChatWithUser(user) { if(!user) return; currentChatUser = user; openModal('chat-modal'); document.getElementById('chat-header-user').innerText = `@${user}`; loadChatMessages(); if(state.chatPollInterval) clearInterval(state.chatPollInterval); state.chatPollInterval = setInterval(loadChatMessages, 3000); }
+    async function loadChatMessages() {
+        if(!currentChatUser) return;
+        const container = document.getElementById('chat-messages');
+        const msgs = await apiRequest(`/api/interact?action=get_messages&other=${encodeURIComponent(currentChatUser)}`); container.innerHTML = '';
+        msgs.forEach(m => { const isMe = m.sender_id == m.current_user_id; container.innerHTML += `<div class="msg-bubble ${isMe?'msg-me':'msg-other'}">${escapeHtml(m.text)}</div>`; });
+        container.scrollTop = container.scrollHeight;
+    }
+    async function sendDirectMessage() {
+        const txt = document.getElementById('chat-input').value; if(!txt) return; document.getElementById('chat-input').value='';
+        await apiRequest('/api/interact', {
+            method: 'POST',
+            body: { action: 'send_message', receiver: currentChatUser, text: txt }
+        });
+        loadChatMessages();
+    }
+    
+    /* --- PUBLISHING --- */
+    async function savePostDetails() {
+        const txt = document.getElementById('post-caption').value;
+        const tags = normalizeTagsInput(document.getElementById('post-tags').value);
+        if(!state.pendingEditVideo) return;
+        
+        const fd = new FormData();
+        fd.append('bio', txt);
+        fd.append('tags', JSON.stringify(tags));
+        if(state.pendingUploadFile) fd.append('video_file', state.pendingUploadFile, state.pendingUploadFile.name || 'rapr-upload.mp4');
+        else if(state.pendingEditVideo.filename) fd.append('filename', state.pendingEditVideo.filename);
+        else return alert("Choose a video first");
+
+        const btn = document.getElementById('publish-btn');
+        btn.innerText = "PUBLISHING...";
+        
+        try {
+            const d = await apiRequest('/api/finalize', { method: 'POST', body: fd });
+            closeModal('post-details-modal');
+            resetPendingVideo();
+            document.getElementById('post-caption').value = '';
+            document.getElementById('post-tags').value = '';
+            await loadData();
+            switchView('home');
+            if(d.video && d.video.id) openUserProfileVideo(d.video.id);
+        } catch(err) {
+            alert(err.message || "Error finalizing drop");
+        }
+        btn.innerText = "PUBLISH VIDEO";
+    }
+
+    // --- NOTIFICATIONS ---
+    function startNotificationPolling() { if(state.notificationPollInterval) clearInterval(state.notificationPollInterval); state.notificationPollInterval = setInterval(fetchNotifications, 10000); fetchNotifications(); }
+    async function fetchNotifications() {
+        const data = await apiRequest('/api/interact?action=get_notifications');
+        const unread = data.filter(n => n.is_read == 0).length;
+        const dot = document.getElementById('notif-badge'); const menuDot = document.getElementById('menu-notif-dot');
+        if(unread>0) { dot.classList.remove('hidden'); menuDot.classList.remove('hidden'); } else { dot.classList.add('hidden'); menuDot.classList.add('hidden'); }
+        const list = document.getElementById('notifications-list'); list.innerHTML = '';
+        data.forEach(n => {
+            let icon='fa-bell', color='text-white', text='did something';
+            if(n.type==='like') { icon='fa-heart'; color='text-red-500'; text='liked your drop.'; }
+            if(n.type==='comment') { icon='fa-comment'; color='text-blue-500'; text='commented on your drop.'; }
+            if(n.type==='follow') { icon='fa-user-plus'; color='text-green-500'; text='started following you.'; }
+            list.innerHTML += `<div class="notif-item ${n.is_read==0?'unread':''}"><div class="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center ${color}"><i class="fas ${icon}"></i></div><div class="flex-1"><p class="text-xs text-white"><span class="font-bold">@${escapeHtml(n.actor_name || 'Unknown')}</span> ${escapeHtml(text)}</p></div></div>`;
+        });
+    }
+
+    // --- SEARCH ---
+    async function handleSearch() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        let filteredVideos = !query ? getGenreFilteredFeed(state.feed) : getGenreFilteredFeed(state.feed).filter(v => (v.tags && v.tags.some(t => t.toLowerCase().includes(query))) || v.username.toLowerCase().includes(query));
+        renderExploreGrid(filteredVideos);
+
+        const userResults = document.getElementById('explore-results-users');
+        if(query.length > 2) {
+            const users = await apiRequest(`/api/interact?action=search_users&query=${encodeURIComponent(query)}`);
+            if(users.length > 0) {
+                userResults.classList.remove('hidden');
+                userResults.innerHTML = '<h4 class="text-[10px] font-bold text-zinc-500 mb-2 tracking-widest">ACCOUNTS</h4>';
+                users.forEach(u => {
+                    const avatar = sanitizeUrl(u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=000&color=fff`);
+                    userResults.innerHTML += `<div class="flex items-center gap-3 mb-3 cursor-pointer p-2 bg-zinc-900 rounded-lg" onclick='openUserProfile(${jsString(u.username)})'><div class="w-8 h-8 rounded-full overflow-hidden"><img src="${avatar}" class="w-full h-full object-cover"></div><div><p class="text-xs font-bold text-white">@${escapeHtml(u.username)}</p></div></div>`;
+                });
+            } else userResults.classList.add('hidden');
+        } else userResults.classList.add('hidden');
+    }
+
+    function renderExploreGrid(data = null) {
+        const grid = document.getElementById('explore-grid');
+        grid.innerHTML = '';
+        const dataSource = data || getGenreFilteredFeed(state.feed);
+        state.currentGridFeed = dataSource; 
+        if(dataSource.length === 0) { grid.innerHTML = '<p class="text-gray-500 text-xs col-span-2 text-center mt-10">No videos found.</p>'; return; }
+        dataSource.forEach((item, i) => {
+            grid.innerHTML += `<div class="explore-item" onclick="playSpecificVideo(${i})"><video src="${sanitizeUrl(item.video)}" muted></video><div class="explore-overlay"><p class="text-[10px] font-bold">@${escapeHtml(item.username)}</p></div></div>`;
+        });
+    }
+
+    function playSpecificVideo(filteredIndex) {
+        state.displayFeed = [...state.currentGridFeed];
+        state.currentIndex = filteredIndex;
+        switchView('home');
+        renderFeed();
+    }
+
+    function toggleRecordState() { document.getElementById('studio-video-input').click(); }
+    function handleStudioCapture(event) { const file = event.target.files?.[0]; if(!file) return; queuePendingVideo(file, URL.createObjectURL(file), file.name); openModal('post-details-modal'); }
+    function handleImportFile(event) { const file = event.target.files?.[0]; if(!file) return; queuePendingVideo(file, URL.createObjectURL(file), file.name); closeModal('import-modal'); openModal('post-details-modal'); }
+    async function handleImportSubmit(event) {
+        event.preventDefault();
+        const input = document.getElementById('import-url-input');
+        const button = document.getElementById('import-submit-btn');
+        const videoUrl = input.value.trim();
+        if(!videoUrl) return alert("Paste a direct video URL or choose a video file.");
+        button.innerText = "IMPORTING...";
+        try {
+            const data = await apiRequest('/api/import', { method: 'POST', body: { videoUrl } });
+            queuePendingVideo(null, data.video, data.filename);
+            input.value = '';
+            closeModal('import-modal');
+            openModal('post-details-modal');
+        } catch(err) { alert(err.message || "Import failed"); }
+        button.innerText = "IMPORT FROM URL";
+    }
+    async function shareVideo(videoId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('video', videoId);
+        const shareUrl = url.toString();
+        if(navigator.share) {
+            try {
+                await navigator.share({ title: 'RapR Drop', url: shareUrl });
+                return;
+            } catch(err) {
+                if(err && err.name === 'AbortError') return;
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            alert("Link copied.");
+        } catch(err) {
+            window.prompt('Copy this link', shareUrl);
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

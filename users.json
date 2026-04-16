@@ -1,0 +1,51 @@
+{
+    "YYYY": {
+        "password": "",
+        "bio": "YO YO ",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "aman1": {
+        "password": "$2y$12$MirzTALa1Gp91nJqLsP8UunTay5gZG3/m79WdVz9tN0JHoeWKAP4i",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "sorrismason": {
+        "password": "$2y$12$8O6aedkHADutWC2ufEx4ze2v19ajsmyimilqbG5EBxfrA/zqQTyQe",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "myamya": {
+        "password": "$2y$12$0kGy3Jwt/MVmcZWensDxiezRNdpVohwTGQr6Id0Zh1sTik39PQwQu",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "Aman": {
+        "password": "$2y$12$/S.gwlJRSCe.bd1ExXyUu.qSzTCiMMxYZf9Rlgk/lX0gQQkZU8wlG",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "Hira": {
+        "password": "$2y$12$Hs3hi0hQTSHBgsbISLncXuZd3Ywhsu0V/M5WRahlpJE/P6mSQOpHC",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    },
+    "qqcom": {
+        "password": "$2y$12$zbQCBuvxhPgc/0HXOWgn2up0KoyL6LZLqTzgPb0BjL7s3jHMFlnHW",
+        "bio": "New Artist",
+        "avatar": "",
+        "header": "",
+        "created_at": 1775423771445
+    }
+}
