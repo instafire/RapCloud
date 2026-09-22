@@ -1,0 +1,42 @@
+[
+    {
+        "id": "ntf_mp1q32hb87e6a26b",
+        "user_to": "testartist",
+        "user_from": "fanuser",
+        "type": "follow",
+        "message": "became your fan!",
+        "related_id": null,
+        "is_read": 0,
+        "created_at": "2026-05-11T21:37:27.887Z"
+    },
+    {
+        "id": "ntf_mp2mzs536dca0911",
+        "user_to": "rapper1",
+        "user_from": "fan1",
+        "type": "follow",
+        "message": "became your fan!",
+        "related_id": null,
+        "is_read": 0,
+        "created_at": "2026-05-12T12:58:41.847Z"
+    },
+    {
+        "id": "ntf_mp4op6r7d1f28a5c",
+        "user_to": "artist1",
+        "user_from": "system",
+        "type": "battle",
+        "message": "You've been matched for a beat battle!",
+        "related_id": null,
+        "is_read": 0,
+        "created_at": "2026-05-13T23:21:59.155Z"
+    },
+    {
+        "id": "ntf_mp4op6ra4ead1bb1",
+        "user_to": "artist2",
+        "user_from": "system",
+        "type": "battle",
+        "message": "You've been matched for a beat battle!",
+        "related_id": null,
+        "is_read": 0,
+        "created_at": "2026-05-13T23:21:59.158Z"
+    }
+]

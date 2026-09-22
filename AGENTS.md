@@ -1,19 +1,76 @@
-# Repository Guidelines
+# RapR — Agent Guidelines
 
-## Project Structure & Module Organization
-This repository uses a flat root layout. [`index.html`](/D:/Projects/rap.genznewz.com/index.html) contains the main client UI, including inline styles and browser-side JavaScript. [`server.js`](/D:/Projects/rap.genznewz.com/server.js) is the Express API and upload server, and [`db.js`](/D:/Projects/rap.genznewz.com/db.js) holds the Node MySQL pool. Legacy PHP endpoints such as [`auth.php`](/D:/Projects/rap.genznewz.com/auth.php), [`feed.php`](/D:/Projects/rap.genznewz.com/feed.php), [`interact.php`](/D:/Projects/rap.genznewz.com/interact.php), and [`finalize.php`](/D:/Projects/rap.genznewz.com/finalize.php) share [`db.php`](/D:/Projects/rap.genznewz.com/db.php). Media assets live in `VIDEOS/` and `PICTURES/`; deployment-facing directories include `.well-known/` and `cgi-bin/`. The Node server creates `uploads/` at runtime.
+## Architecture
+- **Node server** (`server.js`) is the active app — Express on port 3001, JSON-file storage via `lib/store.js` (`JsonStore`). No MySQL needed.
+- **MySQL pool** in `db.js` is **unused** by Node. The PHP endpoints (`auth.php`, `feed.php`, etc.) use MySQL via `db.php` — these are legacy.
+- All client logic is inline in `index.html` (Tailwind CDN, Hammer.js, Font Awesome, Montserrat font).
+- Core lib: `lib/auth.js` (custom HMAC-sha256 tokens, not JWT) and `lib/store.js` (JSON CRUD + social features).
 
-## Build, Test, and Development Commands
-Run `npm install` to install the Node dependencies from [`package.json`](/D:/Projects/rap.genznewz.com/package.json). Use `node server.js` to start the Express API on port `3001`. If you need to exercise the PHP endpoints directly, serve the repo root with `php -S localhost:8000`. `npm test` is only a placeholder right now and exits with an error until a real test runner is added.
+## Commands
+- `npm install` — install deps
+- `npm start` / `npm run dev` — `node server.js` on `0.0.0.0:3001`
+- `npm test` — runs all tests via `node:test` runner (3 test files in `test/`)
+- `php -S localhost:8000` — serve PHP endpoints directly (legacy)
 
-## Coding Style & Naming Conventions
-Follow the existing 4-space indentation in JavaScript and PHP. Keep Node modules in CommonJS style (`require`, `module.exports`) unless you are converting an entire module. Use `camelCase` for JavaScript variables and functions, and preserve the existing `snake_case` pattern for API actions and DB-facing fields such as `get_comments` or `followers_count`. There is no committed ESLint, Prettier, or PHP_CodeSniffer config, so keep formatting manual and diffs focused.
+## Storage
+Data files in repo root: `users.json`, `database.json` (videos), `social.json`, `messages.json`, `notifications.json`, `drafts.json`. These are auto-created with defaults by `JsonStore`. All writes are synchronous (single-threaded safe).
 
-## Testing Guidelines
-No automated test suite or coverage threshold is committed in this checkout. For behavior changes, manually verify the affected flow against local MySQL-backed data: authentication, feed rendering, likes/comments, profile updates, and upload/finalize paths. If you add tests, either colocate them with the code they cover or introduce a dedicated `tests/` directory and wire it into `npm test`.
+## Tests
+Use `node:test` + `node:assert/strict`. No external test runner. Tests create temp dirs with `fs.mkdtempSync` and clean up with `fs.rmSync`. Run a single file: `node --test test/auth.test.js`.
 
-## Commit & Pull Request Guidelines
-Git history is not available in this checkout, so there is no repository-specific commit convention to copy. Use short imperative commit subjects such as `Fix profile upload path` or `Add comment like endpoint`. Pull requests should explain the user-visible change, note any database or environment changes, and include screenshots or short recordings for UI edits in `index.html`.
+## Conventions
+- CommonJS (`require`/`module.exports`), 4-space indent, `camelCase` for JS, `snake_case` for API action names and DB fields.
+- Upload limit: 200MB video via multer. Body limit: 2MB JSON/urlencoded.
+- Auth tokens: custom HMAC-sha256 (30-day TTL). Include as `Authorization: Bearer <token>`.
+- `normalizeHash` in `lib/auth.js` converts `$2y$` bcrypt prefix to `$2b$` for Node compat.
+- Single `/api/interact` endpoint dispatches by `action` param (like, comment, follow, save, send_message, block, report, etc.).
+- Video download via `/api/import` (URL → stream → VIDEOS/). Minimum valid size: 1KB. Max size: 200MB.
 
-## Security & Configuration Tips
-Do not commit real credentials, production media, or generated `uploads/` artifacts. [`db.php`](/D:/Projects/rap.genznewz.com/db.php) currently contains inline database credentials, while [`db.js`](/D:/Projects/rap.genznewz.com/db.js) already expects environment variables; prefer the `.env` pattern for new work.
+## Key Endpoints
+- `GET /api/feed` — paginated feed (`limit`, `offset`)
+- `GET /api/feed/recommended` — personalized feed (followed users → tag overlap → newest)
+- `GET /api/feed/trending` — top tags by video count
+- `GET /api/radio?genre=darkplugg` — shuffled genre radio
+- `GET /api/chart?mode=daily|weekly|monthly&genre=ALL_CITY` — leaderboard
+- `GET /api/challenge?tag=<tag>` — videos using a challenge tag
+- `GET /api/profile/analytics` — own stats (drops, views, likes, saves, followers)
+- `GET /api/video/analytics?id=<id>` — per-video analytics (views over time)
+- `GET /api/drafts` — list drafts
+- `POST /api/drafts/save` — save/update draft (supports `scheduled_at`)
+- `DELETE /api/drafts/:id` — delete draft
+- `GET /api/achievements` — own achievements + streak data
+- `GET /api/beats` — browse beats (genre/BPM filters)
+- `POST /api/beats/upload` — upload beat audio file
+- `GET /artist/:username` — public artist profile (SEO, server-rendered HTML)
+- `POST /api/interact` — all social actions via `action` field
+- Socket.IO on same port — real-time notifications
+
+## Social Actions (interact endpoint)
+like, save, comment, get_comments, like_comment, delete_comment, follow, send_message, get_chats, get_messages, get_notifications, search_users, get_followers, get_following, delete_video, view, get_views, report, block, unblock, get_blocked, add_muted_word, remove_muted_word, request_verification, update_links, shoutout, invite_collab, admin_remove_video, admin_verify_user, get_sound_videos, request_beat, approve_beat, create_challenge, list_challenges, join_challenge, get_pending_requests
+
+## Frontend Features
+- **Video player**: draggable progress bar with waveform, tap-left/right skip (±10s), volume slider, keyboard shortcuts (Space/J/K/L/M/arrows), pre-buffering, mini-player for background audio
+- **Video metadata**: song title, producer credit, lyrics overlay, original sound chip, watermark, duet badge
+- **Feed modes**: "ALL CITY" (newest), "FOR YOU" (recommended), "RADIO" (shuffle by genre)
+- **Auth**: login/register in-app, HMAC tokens, 30-day localStorage
+- **Social**: swipe-right to like, pull-to-refresh, haptic feedback, toasts instead of alerts, loading skeletons
+- **Profiles**: analytics tab (drops/views/likes/saves/followers), external links (SoundCloud, Spotify, etc.), tip link, mention badges, shoutout/collab buttons, streak display, achievement badges
+- **Drafts**: save unfinished drops, schedule for later, publish from drafts list in studio
+- **Collaborative drops**: multi-artist video credits with collab notifications
+- **Charts**: DAILY/WEEKLY/MONTHLY tabs, genre-filtered, server-computed scores
+- **Explore**: search users/tags, trending tags row with fire indicator, beats marketplace, challenges
+- **Beats marketplace**: browse beats by genre, request to use, approve beat requests
+- **Cypher challenges**: timed challenges, entry tracking
+- **Moderation**: report video, block user, mute words
+- **Admin**: reports dashboard, video removal, user verification (auto-enabled for configured users)
+- **PWA**: service worker, manifest.json, installable
+- **Socket.IO**: real-time notifications (with HTTP polling fallback)
+- **Public artist profiles**: server-rendered HTML at `/artist/:username`, indexed by search engines
+
+## Gotchas
+- No `.gitignore` — don't commit `node_modules/`, `uploads/`, or `.env` files.
+- `dotenv` loads with `{ quiet: true }` in `server.js` — `.env` is optional.
+- Only the `server.js` `buildApp({ store })` export is testable; direct start uses `require.main === main`.
+- PHP auth tokens (`$2y$` bcrypt) will work with Node via `normalizeHash` conversion.
+- In-memory rate limit: 10 req/10s on auth/upload, 100 req/10s general. 15-30s ban if exceeded.
+- Admin users: `rapradmin` or comma-separated `ADMIN_USERS` env var.

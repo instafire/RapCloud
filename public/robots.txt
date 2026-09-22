@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /VIDEOS/
+Disallow: /uploads/
+Disallow: /*.php$
+Disallow: /cgi-bin/
+Sitemap: https://rap.genznewz.com/sitemap.xml

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Runtime & Logs
+*.log
+error_log
+
+# Uploads
+uploads/
+
+# IDE & Editor artifacts
+.opencode/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

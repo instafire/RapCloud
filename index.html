@@ -2,30 +2,114 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RapR v25.5 - TikTok Added</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RapR — The Underground Rap Platform | Upload & Share Rap Music Videos</title>
+    <meta name="description" content="RapR is the underground rap platform for artists to upload, share, and promote rap music videos. Real charts, real fans, real engagement. Join the underground.">
+    <link rel="canonical" href="https://rap.genznewz.com/">
+
+    <meta property="og:title" content="RapR — The Underground">
+    <meta property="og:description" content="RapR is the underground rap platform for artists to upload, share, and promote rap music videos. Real charts, real fans, real engagement. Join the underground.">
+    <meta property="og:image" content="https://rap.genznewz.com/assets/og-image.png">
+    <meta property="og:url" content="https://rap.genznewz.com/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="RapR — The Underground Rap Platform">
+    <meta name="twitter:description" content="RapR is the underground rap platform for artists to upload, share, and promote rap music videos.">
+    <link rel="manifest" href="/assets/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/assets/sw.js').catch(() => {});
+        }
+    </script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.2/socket.io.min.js"></script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "RapR",
+          "description": "Underground rap platform for artists to upload, share, and promote rap music videos. Real charts, real fans, real engagement.",
+          "applicationCategory": "MultimediaApplication",
+          "operatingSystem": "Web",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        },
+        {
+          "@type": "Organization",
+          "name": "RapR",
+          "url": "https://rap.genznewz.com",
+          "description": "The underground rap platform — upload, share, and discover rap music videos."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is RapR?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "RapR is a free underground rap platform where artists can upload, share, and promote their rap music videos. It features daily charts, trending tags, artist analytics, and a community-driven For You feed."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is RapR free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, RapR is completely free for artists and fans. Create an account, upload your rap videos, and start building your audience with no hidden fees."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I upload my rap video to RapR?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Upload a video file directly, paste a direct video URL for import, or record a new video using your device camera. Add your song title, producer credits, lyrics, and hashtags before publishing."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do underground rappers get discovered on RapR?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Rappers get discovered through daily, weekly, and monthly charts ranked by real engagement, trending genre tags, the personalized For You feed, and community features like shoutouts and collab invites."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 
     <style>
         /* --- CORE LAYOUT --- */
-        body { background: #000; color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
-        #app-container { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; background: #000; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid #222; border-right: 1px solid #222; }
+        body { background: #0a0a0a; color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
+        #app-container { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; background: #0a0a0a; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid #222; border-right: 1px solid #222; }
 
         /* --- SCROLLBAR --- */
         * { -ms-overflow-style: none; scrollbar-width: none; }
         *::-webkit-scrollbar { display: none; }
 
         /* --- VIEWS --- */
-        .view-section { display: none; flex: 1; width: 100%; height: 100%; position: relative; overflow: hidden; }
-        .view-section.active { display: block; }
+        .view-section { display: none; flex: 1; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden; opacity: 0; transform: scale(0.97); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: none; }
+        .view-section.active { display: block; opacity: 1; transform: scale(1); pointer-events: auto; z-index: 1; }
 
         /* --- FEED --- */
-        #feed-container { width: 100%; height: 100%; position: relative; overflow: hidden; background: #000; }
-        .video-card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; will-change: transform; user-select: none; }
+        #feed-container { width: 100%; height: 100%; position: relative; overflow: hidden; background: #0a0a0a; }
+        .video-card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; will-change: transform; user-select: none; }
         video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         
         .gesture-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
@@ -40,6 +124,8 @@
         .stamp-trash { right: 40px; color: #ef4444; border-color: #ef4444; transform: rotate(15deg); box-shadow: 0 0 15px rgba(239,68,68,0.5); }
 
         .verified-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: middle; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+        .feed-bottom-fade { position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; background: linear-gradient(to top, #0a0a0a 0%, transparent 100%); pointer-events: none; z-index: 15; }
 
         /* --- INTERACTIONS --- */
         .interaction-column { position: absolute; bottom: 130px; right: 15px; display: flex; flex-direction: column; gap: 20px; z-index: 50; align-items: center; pointer-events: auto; }
@@ -81,8 +167,50 @@
         .tag-pill:hover { border-color: white; color: white; background: #333; }
         .tag-pill.active { background: white; color: black; border-color: white; }
 
-        #auth-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
         
+        /* --- TOAST --- */
+        #toast-container { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; max-width: 90%; }
+        .toast { padding: 12px 24px; border-radius: 12px; font-size: 12px; font-weight: 700; pointer-events: auto; animation: toastIn 0.3s ease-out; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(12px); text-align: center; max-width: 360px; }
+        .toast-error { background: rgba(220,38,38,0.9); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .toast-success { background: rgba(22,163,74,0.9); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .toast-info { background: rgba(30,30,30,0.95); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        @keyframes toastIn { 0% { opacity: 0; transform: translateY(-20px) scale(0.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* --- SKELETONS --- */
+        .skeleton { background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-circle { width: 48px; height: 48px; border-radius: 50%; }
+        .skeleton-line { height: 12px; width: 60%; margin-bottom: 8px; }
+        .skeleton-line.short { width: 40%; }
+
+        /* --- PULL TO REFRESH --- */
+        .pull-indicator { position: absolute; top: -60px; left: 50%; transform: translateX(-50%); z-index: 100; color: #888; font-size: 10px; font-weight: 700; letter-spacing: 2px; transition: opacity 0.2s; text-align: center; }
+
+        /* --- PLAYER CONTROLS --- */
+        .player-controls-overlay { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 60; pointer-events: none; padding: 0 16px 8px; }
+        .player-controls-overlay > * { pointer-events: auto; }
+        .progress-track { width: 100%; height: 20px; background: transparent; cursor: pointer; position: relative; margin-bottom: 2px; touch-action: none; display: flex; align-items: center; }
+        .progress-waveform { position: absolute; bottom: 2px; left: 0; width: 100%; height: 16px; display: flex; align-items: flex-end; gap: 1px; opacity: 0.3; pointer-events: none; }
+        .progress-waveform span { width: 2px; background: rgba(255,255,255,0.25); border-radius: 1px; animation: wavePulse 1.2s ease-in-out infinite alternate; }
+        .progress-waveform span:nth-child(odd) { animation-delay: 0.2s; }
+        .progress-waveform span:nth-child(3n) { animation-delay: 0.4s; }
+        @keyframes wavePulse { 0% { height: 2px; } 100% { height: 12px; } }
+        .progress-fill { height: 3px; background: #ef4444; border-radius: 2px; width: 0%; transition: width 0.1s linear; position: relative; z-index: 1; }
+        .progress-thumb { position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; background: white; border-radius: 50%; box-shadow: 0 0 6px rgba(239,68,68,0.6); opacity: 0; transition: opacity 0.2s; }
+        .progress-track:hover .progress-thumb { opacity: 1; }
+        .player-time-row { display: flex; justify-content: space-between; align-items: center; }
+        .player-time { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+        .volume-control { display: flex; align-items: center; gap: 6px; }
+        .volume-slider { width: 0; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; cursor: pointer; transition: width 0.2s; touch-action: none; overflow: hidden; }
+        .volume-slider-fill { height: 100%; background: white; border-radius: 2px; width: 100%; }
+        .volume-control:hover .volume-slider { width: 60px; }
+        .volume-control.active .volume-slider { width: 60px; }
+        .seek-flash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 900; color: rgba(255,255,255,0.6); text-shadow: 0 2px 12px rgba(0,0,0,0.8); z-index: 70; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+        .seek-flash.show { opacity: 1; }
+
+        /* WATERMARK */
+        .watermark { position: absolute; top: 12px; left: 12px; z-index: 25; pointer-events: none; opacity: 0.35; font-size: 10px; font-weight: 900; color: white; letter-spacing: 0.5px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 4px; }
+
         /* --- PARTICLES --- */
         @keyframes floatUp { 0% { opacity: 1; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(var(--tw-translate-x), -150px) scale(1.5); } }
         @keyframes fallDown { 0% { opacity: 1; transform: translate(0, 0) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--tw-translate-x), 150px) rotate(180deg); } }
@@ -107,50 +235,392 @@
         /* SHEETS & MODALS */
         .bottom-sheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #1a1a1a; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 300; display: flex; flex-direction: column; border-top: 1px solid #333; max-height: 80%; }
         .bottom-sheet.open { transform: translateY(0); }
-        .full-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 500; transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+        .full-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 500; transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
         .full-modal.open { transform: translateX(0); }
         
         /* MESSAGING & NOTIFS */
-        .msg-bubble { max-width: 75%; padding: 8px 14px; border-radius: 18px; margin-bottom: 8px; font-size: 13px; font-weight: 500; position: relative; }
-        .msg-me { align-self: flex-end; background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border-bottom-right-radius: 4px; }
-        .msg-other { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 4px; border: 1px solid #333; }
+        .msg-bubble { max-width: 78%; padding: 10px 16px; border-radius: 18px; margin-bottom: 6px; font-size: 13px; font-weight: 500; position: relative; line-height: 1.4; }
+        .msg-me { align-self: flex-end; background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border-bottom-right-radius: 4px; box-shadow: 0 2px 8px rgba(239,68,68,0.2); }
+        .msg-other { align-self: flex-start; background: #1a1a1a; color: #ddd; border-bottom-left-radius: 4px; border: 1px solid #2a2a2a; }
         
-        .notif-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #222; background: #000; }
-        .notif-item.unread { background: #111; }
-        .comment-item { margin-bottom: 12px; }
-        .comment-reply { margin-left: 40px; border-left: 2px solid #333; padding-left: 10px; margin-top: 5px; }
-        .user-list-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #222; cursor: pointer; }
-        .user-list-item:hover { background: #111; }
+        .notif-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #181818; background: #0a0a0a; transition: background 0.2s; }
+        .notif-item.unread { background: #111; border-left: 3px solid #ef4444; }
+        .comment-item { margin-bottom: 14px; padding: 8px 12px; border-radius: 12px; transition: background 0.2s; }
+        .comment-item:hover { background: rgba(255,255,255,0.02); }
+        .comment-reply { margin-left: 44px; border-left: 2px solid #2a2a2a; padding-left: 14px; margin-top: 4px; border-radius: 0; }
+        .user-list-item { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: background 0.2s; }
+        .user-list-item:hover { background: #141414; }
 
         /* NAV */
-        .bottom-nav { height: 75px; background: #000; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 5px; }
-        .nav-item { color: #555; font-size: 22px; cursor: pointer; transition: color 0.2s; display: flex; flex-direction: column; align-items: center; }
+        .bottom-nav { height: 80px; background: #0a0a0a; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 8px; padding-top: 4px; }
+        .nav-item { color: #444; font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; min-width: 48px; }
+        .nav-item:hover { color: #888; }
         .nav-item.active { color: white; }
-        .studio-nav-btn { width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444, #991b1b); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); transform: translateY(-5px); }
+        .nav-item.active::after { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: #ef4444; border-radius: 2px; }
+        .nav-label { font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.6; }
+        .nav-item.active .nav-label { opacity: 1; color: #ef4444; }
+        .studio-nav-btn { width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444, #991b1b); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); transform: translateY(-4px); transition: all 0.2s; }
+        .studio-nav-btn:hover { transform: translateY(-6px) scale(1.05); box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6); }
+        .btn-loading { opacity: 0.6; pointer-events: none; cursor: default; }
+        .tap-scale { transition: transform 0.1s; cursor: pointer; }
+        .tap-scale:active { transform: scale(0.95); }
+
+        /* --- VISUAL FLAIR --- */
+        @keyframes cardEnter { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        .video-card.entering { animation: cardEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        @keyframes stampSlam { 0% { transform: scale(2); opacity: 0; } 50% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .stamp-slam { animation: stampSlam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; }
+
+        @keyframes heartFloat { 0% { opacity: 1; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.5); } }
+        .like-particle { position: absolute; font-size: 24px; pointer-events: none; z-index: 999; animation: heartFloat 0.7s ease-out forwards; }
+
+        @keyframes borderEmerging { 0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.3); } }
+        @keyframes borderRising { 0%, 100% { box-shadow: 0 0 8px 3px rgba(245,158,11,0.5); } 50% { box-shadow: 0 0 16px 6px rgba(245,158,11,0.3); } }
+        @keyframes borderVerified { 0% { box-shadow: 0 0 0 2px rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 2px rgba(34,197,94,0.5), 0 0 12px 4px rgba(34,197,94,0); } }
+        @keyframes borderFeatured { 0% { box-shadow: 0 0 4px 2px rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 12px 6px rgba(239,68,68,0.6), 0 0 0 0 rgba(255,215,0,0); } 100% { box-shadow: 0 0 4px 2px rgba(239,68,68,0.4); } }
+        @keyframes streakGlow { 0%, 100% { box-shadow: 0 0 5px rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 20px rgba(245,158,11,0.8); } }
+        .tier-border-emerging { box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+        .tier-border-rising { animation: borderRising 2s ease-in-out infinite; box-shadow: 0 0 8px 3px rgba(245,158,11,0.5); }
+        .tier-border-verified { animation: borderVerified 1.5s ease-in-out infinite alternate; }
+        .tier-border-featured { animation: borderFeatured 2s ease-in-out infinite; box-shadow: 0 0 4px 2px rgba(239,68,68,0.4); }
+        .streak-active { animation: streakGlow 1.5s ease-in-out infinite; }
+
+        @keyframes screenFlash { 0% { background: rgba(239,68,68,0.15); } 100% { background: transparent; } }
+        .screen-flash::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; animation: screenFlash 0.2s ease-out forwards; }
+
+        @keyframes achievementSlide { 0% { opacity: 0; transform: translateY(-30px) scale(0.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .toast-achievement { background: linear-gradient(135deg, rgba(239,68,68,0.9), rgba(245,158,11,0.9)) !important; animation: achievementSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards !important; border: 1px solid rgba(255,215,0,0.3) !important; }
+
+        @keyframes pulseDot { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulseDot 1.2s ease-in-out infinite; margin-right: 4px; }
+
+        /* HEADER GRADIENTS */
+        .header-dark { background: linear-gradient(135deg, #0a0a0a, #1a1a2e); }
+        .header-blood { background: linear-gradient(135deg, #1a0000, #4a0000); }
+        .header-purple { background: linear-gradient(135deg, #1a0020, #3b0764); }
+        .header-neon { background: linear-gradient(135deg, #0a0a0a, #052e16); }
+        .header-gold { background: linear-gradient(135deg, #1a1400, #4a3a00); }
+        .header-ocean { background: linear-gradient(135deg, #001a2e, #00264d); }
+        .header-amber { background: linear-gradient(135deg, #1a0f00, #4a2a00); }
+        .header-gray { background: linear-gradient(135deg, #111111, #222222); }
+
+        /* --- LANDING PAGE --- */
+        #landing-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; background: #0a0a0a; overflow-y: auto; overflow-x: hidden; color: white; font-family: 'Montserrat', sans-serif; -webkit-overflow-scrolling: touch; }
+        #landing-page.show { display: block; }
+
+        .landing-grain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 256px; }
+
+        .landing-nav { position: fixed; top: 0; left: 0; width: 100%; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(180deg, rgba(10,10,10,0.95) 0%, transparent 100%); }
+        .landing-logo { font-size: 24px; font-weight: 900; font-style: italic; letter-spacing: -1px; }
+        .landing-nav-links { display: flex; align-items: center; gap: 20px; }
+        .landing-nav-link { font-size: 11px; font-weight: 700; color: #888; text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; cursor: pointer; }
+        .landing-nav-link:hover { color: white; }
+        .landing-nav-cta { font-size: 10px; font-weight: 800; color: white; background: #ef4444; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+        .landing-nav-cta:hover { background: #dc2626; transform: scale(1.05); }
+
+        .landing-hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; position: relative; padding: 80px 24px 40px; overflow: hidden; }
+        .landing-hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 50% 40%, rgba(239,68,68,0.08) 0%, transparent 60%); pointer-events: none; }
+        .landing-hero-content { display: flex; flex-direction: column; align-items: center; gap: 40px; position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .landing-hero-text { text-align: center; max-width: 600px; }
+        .landing-hero-eyebrow { font-size: 11px; font-weight: 700; color: #ef4444; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+        .landing-hero-title { font-size: clamp(48px, 12vw, 120px); font-weight: 900; font-style: italic; line-height: 0.9; letter-spacing: -3px; margin-bottom: 20px; text-transform: uppercase; }
+        .landing-hero-sub { font-size: 15px; font-weight: 500; color: #888; line-height: 1.6; margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; }
+        .landing-hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+        .landing-btn-primary { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; color: white; background: #ef4444; border: none; padding: 16px 40px; border-radius: 50px; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s; box-shadow: 0 0 30px rgba(239,68,68,0.3); }
+        .landing-btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(239,68,68,0.5); }
+        .landing-btn-primary:active { transform: scale(0.98); }
+        .landing-btn-secondary { font-size: 11px; font-weight: 700; color: #888; text-decoration: none; letter-spacing: 2px; text-transform: uppercase; padding: 16px 24px; border: 1px solid #333; border-radius: 50px; transition: all 0.2s; cursor: pointer; }
+        .landing-btn-secondary:hover { color: white; border-color: #666; }
+
+        .landing-hero-stats { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-num { display: block; font-size: 32px; font-weight: 900; color: white; line-height: 1; }
+        .hero-stat-label { font-size: 9px; font-weight: 700; color: #555; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+        .landing-hero-mockup { perspective: 1000px; }
+        .phone-frame { position: relative; width: 240px; height: 480px; background: #111; border-radius: 36px; border: 3px solid #222; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); transform: rotateY(-5deg) rotateX(2deg); transition: transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .phone-frame:hover { transform: rotateY(0deg) rotateX(0deg); }
+        .phone-notch { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 100px; height: 24px; background: #0a0a0a; border-radius: 0 0 16px 16px; z-index: 2; }
+        .phone-video { width: 100%; height: 100%; object-fit: cover; }
+        .phone-overlay-grad { position: absolute; bottom: 0; left: 0; width: 100%; height: 40%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); pointer-events: none; }
+
+        .landing-scroll-indicator { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 700; color: #444; letter-spacing: 2px; animation: bounceDown 2s infinite; }
+
+        @keyframes bounceDown { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+        .landing-section { padding: 80px 24px; position: relative; max-width: 1100px; margin: 0 auto; width: 100%; }
+        .landing-section-label { font-size: 10px; font-weight: 700; color: #ef4444; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+        .landing-section-title { font-size: clamp(28px, 5vw, 48px); font-weight: 900; font-style: italic; text-align: center; margin-bottom: 48px; line-height: 1.1; }
+
+        .landing-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .feature-card { background: #111; border: 1px solid #222; border-radius: 20px; padding: 32px 24px; transition: all 0.3s ease; }
+        .feature-card:hover { border-color: #ef4444; transform: translateY(-4px); box-shadow: 0 8px 30px rgba(239,68,68,0.1); }
+        .feature-icon { width: 48px; height: 48px; border-radius: 14px; background: rgba(239,68,68,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #ef4444; margin-bottom: 16px; }
+        .feature-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+        .feature-desc { font-size: 13px; color: #777; line-height: 1.6; }
+
+        .landing-steps { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; align-items: center; }
+        .step { display: flex; gap: 20px; align-items: flex-start; width: 100%; }
+        .step-number { font-size: 36px; font-weight: 900; font-style: italic; color: #ef4444; line-height: 1; min-width: 60px; opacity: 0.5; }
+        .step-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+        .step-desc { font-size: 13px; color: #777; line-height: 1.6; }
+        .step-connector { width: 2px; height: 24px; background: #333; margin-left: 29px; }
+
+        .landing-cta { text-align: center; padding-bottom: 100px; position: relative; overflow: hidden; }
+        .landing-cta::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 50% 50%, rgba(239,68,68,0.06) 0%, transparent 60%); pointer-events: none; }
+        .landing-cta-title { font-size: clamp(36px, 8vw, 72px); font-weight: 900; font-style: italic; line-height: 1; margin-bottom: 16px; }
+        .landing-cta-sub { font-size: 14px; color: #888; max-width: 480px; margin: 0 auto 40px; line-height: 1.6; }
+
+        .landing-auth-form { max-width: 360px; margin: 0 auto; padding: 40px 32px; background: #111; border-radius: 24px; border: 1px solid #222; }
+        .landing-auth-title { font-size: 16px; font-weight: 900; text-align: center; margin-bottom: 24px; letter-spacing: 1px; }
+        .landing-auth-input-group { position: relative; margin-bottom: 14px; }
+        .landing-auth-input { width: 100%; padding: 16px 16px 16px 44px; background: #0a0a0a; border: 1px solid #222; border-radius: 14px; color: white; font-size: 13px; font-weight: 600; outline: none; transition: all 0.2s; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        .landing-auth-input:focus { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+        .landing-auth-input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #555; font-size: 14px; }
+        .landing-auth-submit { width: 100%; margin-top: 8px; }
+        .landing-auth-toggle { text-align: center; font-size: 11px; color: #555; font-weight: 600; margin-top: 20px; cursor: pointer; }
+        .landing-auth-legal { text-align: center; font-size: 9px; color: #333; font-weight: 700; margin-top: 16px; letter-spacing: 1px; }
+
+        .landing-footer { text-align: center; padding: 40px 24px 60px; border-top: 1px solid #111; }
+        .landing-footer-logo { font-size: 20px; font-weight: 900; font-style: italic; margin-bottom: 4px; }
+        .landing-footer-tagline { font-size: 9px; font-weight: 700; color: #444; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+        .landing-footer-legal { font-size: 10px; color: #333; }
+
+        /* REVEAL ANIMATION */
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        @media (min-width: 768px) {
+            .landing-hero-content { flex-direction: row; text-align: left; }
+            .landing-hero-text { text-align: left; }
+            .landing-hero-sub { margin-left: 0; }
+            .landing-hero-ctas { justify-content: flex-start; }
+            .landing-hero-stats { justify-content: flex-start; }
+            .phone-frame { width: 280px; height: 560px; }
+            .landing-features-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .landing-hero { padding: 60px 16px 40px; }
+            .phone-frame { width: 200px; height: 400px; }
+            .landing-section { padding: 60px 16px; }
+            .landing-nav-links { gap: 12px; }
+            .landing-nav-link { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div id="auth-screen">
-    <h1 class="text-5xl font-black italic tracking-tighter mb-2">RapR<span class="text-red-600">.</span></h1>
-    <p class="text-gray-400 text-xs mb-8 tracking-widest font-bold">THE UNDERGROUND</p>
-    <div class="w-full max-w-xs space-y-4">
-        <h2 id="auth-title" class="text-center text-xl font-bold text-white mb-2">CREATE ACCOUNT</h2>
-        <input id="auth-username" type="text" placeholder="Username" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-red-600 font-bold text-center">
-        <input id="auth-password" type="password" placeholder="Password" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-red-600 font-bold text-center">
-        <button id="auth-btn" onclick="handleAuth()" class="w-full bg-white text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest hover:scale-105 transition transform shadow-lg shadow-white/20">SIGN UP</button>
-        <p onclick="toggleAuthMode()" id="auth-toggle-text" class="text-center text-xs text-gray-500 font-bold mt-4 cursor-pointer hover:text-white underline">Already have an account? Login</p>
-    </div>
-    <p class="text-zinc-600 text-[10px] mt-8 font-bold">BY JOINING YOU AGREE TO KEEP IT REAL.</p>
+<div id="landing-page">
+    <!-- NAV -->
+    <nav class="landing-nav">
+        <span class="landing-logo">RapR<span class="text-red-600">.</span></span>
+        <div class="landing-nav-links">
+            <a href="#features" class="landing-nav-link">Features</a>
+            <a href="#how-it-works" class="landing-nav-link">How It Works</a>
+            <button onclick="document.getElementById('landing-auth-section').scrollIntoView({behavior:'smooth'})" class="landing-nav-cta">Join</button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero" class="landing-hero">
+        <div class="landing-grain"></div>
+        <div class="landing-hero-content">
+            <div class="landing-hero-text">
+                <p class="landing-hero-eyebrow">RapR v25.5</p>
+                <h1 class="landing-hero-title">THE UNDER<span class="text-red-600">GROUND</span></h1>
+                <p class="landing-hero-sub">Drop your sound. Build your scene. RapR is the underground rap platform built for artists who want to upload, share, and promote their rap music videos. Browse beats, collab with producers, compete in cypher challenges, and track your streak. No algorithms, no gatekeepers — just real fans and real engagement.</p>
+                <div class="landing-hero-ctas">
+                    <button onclick="document.getElementById('landing-auth-section').scrollIntoView({behavior:'smooth'})" class="landing-btn-primary">START DROPPING</button>
+                    <a href="#features" class="landing-btn-secondary">EXPLORE ↓</a>
+                </div>
+                <div class="landing-hero-stats">
+                    <div class="hero-stat"><span class="hero-stat-num" data-target="1337">0</span><span class="hero-stat-label">ARTISTS</span></div>
+                    <div class="hero-stat"><span class="hero-stat-num" data-target="8921">0</span><span class="hero-stat-label">DROPS</span></div>
+                    <div class="hero-stat"><span class="hero-stat-num" data-target="28">0</span><span class="hero-stat-label">GENRES</span></div>
+                </div>
+            </div>
+            <div class="landing-hero-mockup" id="hero-mockup">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <video class="phone-video" src="/VIDEOS/rap_1765577382.mp4" muted autoplay loop playsinline></video>
+                    <div class="phone-overlay-grad"></div>
+                </div>
+            </div>
+        </div>
+        <div class="landing-scroll-indicator">SCROLL ↓</div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="landing-section landing-features">
+        <div class="landing-section-label">FEATURES</div>
+        <h2 class="landing-section-title">Built for the <span class="text-red-600">underground</span></h2>
+        <div class="landing-features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-microphone"></i></div>
+                <h3 class="feature-title">Drop Your Sound</h3>
+                <p class="feature-desc">Upload or import your rap videos in seconds. Add song titles, producer credits, and lyrics. Every drop gets its own original sound.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-users"></i></div>
+                <h3 class="feature-title">Build Your Scene</h3>
+                <p class="feature-desc">Connect with producers, collab on tracks, shout out your crew. The algorithm puts your people first.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-fire"></i></div>
+                <h3 class="feature-title">Get Discovered</h3>
+                <p class="feature-desc">Daily, weekly, and monthly charts ranked by real engagement. Trending tags. A For You feed that actually gets you.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-chart-simple"></i></div>
+                <h3 class="feature-title">Know Your Numbers</h3>
+                <p class="feature-desc">Real-time analytics — views, likes, saves, follower growth. See exactly how your sound is spreading.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3 class="feature-title">Swipe. Discover. Repeat.</h3>
+                <p class="feature-desc">Vertical video feed with swipe gestures, draggable progress bar, tap-to-skip, and volume control built for music.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><i class="fas fa-message"></i></div>
+                <h3 class="feature-title">Built-in DM & Collabs</h3>
+                <p class="feature-desc">Direct messages, collab invites, shoutouts — everything you need to build your network without leaving the app.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works" class="landing-section landing-how">
+        <div class="landing-section-label">HOW IT WORKS</div>
+        <h2 class="landing-section-title">Three steps to <span class="text-red-600">the scene</span></h2>
+        <div class="landing-steps">
+            <div class="step reveal">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h3 class="step-title">CREATE</h3>
+                    <p class="step-desc">Record a video, upload a file, or paste a URL. Add your track name, producer tag, and lyrics.</p>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step reveal">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h3 class="step-title">DROP</h3>
+                    <p class="step-desc">Tag your genre, write a caption, mention your crew. Publish instantly or save as a draft for later.</p>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step reveal">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h3 class="step-title">GROW</h3>
+                    <p class="step-desc">Watch your views climb, collect fans, hit the charts. Every like and follow pushes your sound further.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="landing-section landing-how">
+        <div class="landing-section-label">FAQ</div>
+        <h2 class="landing-section-title">Frequently asked <span class="text-red-600">questions</span></h2>
+        <div class="landing-steps" style="max-width:700px">
+            <div class="step reveal">
+                <div class="step-number" style="font-size:16px;min-width:20px;opacity:1">Q</div>
+                <div class="step-content">
+                    <h3 class="step-title" style="font-size:14px">What is RapR?</h3>
+                    <p class="step-desc">RapR is a free underground rap platform where artists can upload, share, and promote their rap music videos. It features daily charts, trending tags, artist analytics, and a community-driven For You feed — built specifically for the underground scene.</p>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step reveal">
+                <div class="step-number" style="font-size:16px;min-width:20px;opacity:1">Q</div>
+                <div class="step-content">
+                    <h3 class="step-title" style="font-size:14px">Is RapR free to use?</h3>
+                    <p class="step-desc">Yes, RapR is completely free for artists and fans. Create an account, upload your rap videos, and start building your audience with no hidden fees or paid tiers.</p>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step reveal">
+                <div class="step-number" style="font-size:16px;min-width:20px;opacity:1">Q</div>
+                <div class="step-content">
+                    <h3 class="step-title" style="font-size:14px">How do I upload my rap video to RapR?</h3>
+                    <p class="step-desc">Upload a video file directly from your device, paste a direct video URL to import, or record a new video using your camera. Add your song title, producer credits, lyrics, and hashtags before publishing. You can also save unfinished drops as drafts.</p>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step reveal">
+                <div class="step-number" style="font-size:16px;min-width:20px;opacity:1">Q</div>
+                <div class="step-content">
+                    <h3 class="step-title" style="font-size:14px">How do underground rappers get discovered on RapR?</h3>
+                    <p class="step-desc">Rappers get discovered through daily, weekly, and monthly charts ranked by real engagement, trending genre tags, the personalized For You feed, and organic community tools like shoutouts, collab invites, and mentions. No paid promotion needed.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA + AUTH -->
+    <section id="landing-auth-section" class="landing-section landing-cta">
+        <div class="landing-grain"></div>
+        <h2 class="landing-cta-title reveal">YOUR SCENE <span class="text-red-600">AWAITS</span></h2>
+        <p class="landing-cta-sub reveal">Join the fastest growing underground rap platform. No gatekeepers. No algorithms from hell. Just the culture.</p>
+        <div id="landing-auth-form" class="landing-auth-form reveal">
+            <h3 id="auth-title" class="landing-auth-title">CREATE ACCOUNT</h3>
+            <div class="landing-auth-input-group">
+                <input id="auth-username" type="text" placeholder="Choose a username" aria-label="Username" autocomplete="username" class="landing-auth-input">
+                <i class="fas fa-user landing-auth-input-icon"></i>
+            </div>
+            <div class="landing-auth-input-group">
+                <input id="auth-password" type="password" placeholder="Password (min 8 characters)" aria-label="Password" autocomplete="new-password" class="landing-auth-input">
+                <i class="fas fa-lock landing-auth-input-icon"></i>
+            </div>
+            <button id="auth-btn" onclick="handleAuth()" class="landing-btn-primary landing-auth-submit">JOIN THE UNDERGROUND</button>
+            <p onclick="toggleAuthMode()" id="auth-toggle-text" class="landing-auth-toggle">Already have an account? <span class="text-red-600 font-bold underline cursor-pointer">Login</span></p>
+            <p class="landing-auth-legal">BY JOINING YOU AGREE TO KEEP IT REAL.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="landing-footer">
+        <p class="landing-footer-logo">RapR<span class="text-red-600">.</span></p>
+        <p class="landing-footer-tagline">THE UNDERGROUND</p>
+        <nav class="landing-footer-links" style="display:flex;gap:24px;justify-content:center;margin-bottom:12px;flex-wrap:wrap">
+            <a href="#features" style="color:#555;text-decoration:none;font-size:11px;font-weight:700">Upload Rap Music Videos</a>
+            <a href="#how-it-works" style="color:#555;text-decoration:none;font-size:11px;font-weight:700">Underground Rap Community</a>
+            <a href="#faq" style="color:#555;text-decoration:none;font-size:11px;font-weight:700">How to Promote Rap Music</a>
+            <a href="#landing-auth-section" style="color:#ef4444;text-decoration:none;font-size:11px;font-weight:700">Join the Underground</a>
+        </nav>
+        <p class="landing-footer-legal">© 2026 RapR. All rights reserved. Keep it real.</p>
+    </footer>
 </div>
+
+<div id="toast-container"></div>
+
+<script>
+    function showToast(message, type = 'info', duration = 3000) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = type === 'achievement' ? 'toast toast-achievement' : `toast toast-${type}`;
+        if (type === 'achievement') toast.textContent = '🏆 ' + message;
+        else toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, duration);
+    }
+</script>
 
 <div id="app-container">
     
-    <div id="top-bar" class="absolute top-0 w-full p-4 pt-5 z-20 flex justify-between items-center bg-transparent pointer-events-none hidden">
-        <div id="top-left-action" class="pointer-events-auto">
-            <div onclick="openSheet('filter-sheet')" class="bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-md cursor-pointer flex items-center gap-2 border border-white/10 hover:bg-white/10">
-                <span id="current-genre-display" class="text-[10px] font-bold text-white tracking-wide">ALL CITY</span>
-                <i class="fas fa-chevron-down text-[8px] text-gray-400"></i>
+    <div id="top-bar" class="absolute top-0 w-full p-4 pt-5 z-20 flex justify-between items-center pointer-events-none hidden" style="background:linear-gradient(180deg,rgba(10,10,10,0.8) 0%,transparent 100%)">
+        <div id="top-left-action" class="pointer-events-auto flex gap-2">
+            <div onclick="setFeedMode('all')" id="feed-mode-all" class="bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-md cursor-pointer flex items-center gap-2 border border-white/10 hover:bg-white/10">
+                <span class="text-[10px] font-bold text-white tracking-wide">ALL CITY</span>
+            </div>
+            <div onclick="setFeedMode('for_you')" id="feed-mode-for-you" class="bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-md cursor-pointer flex items-center gap-2 border border-white/5 hover:bg-white/10">
+                <span class="text-[10px] font-bold text-zinc-500 tracking-wide">FOR YOU</span>
+            </div>
+            <div onclick="toggleRadioMode()" id="feed-mode-radio" class="bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-md cursor-pointer flex items-center gap-2 border border-white/5 hover:bg-white/10">
+                <span class="text-[10px] font-bold text-zinc-500 tracking-wide"><i class="fas fa-radio text-[8px]"></i> RADIO</span>
             </div>
         </div>
         <div id="top-right-action" class="pointer-events-auto flex gap-3">
@@ -166,7 +636,7 @@
     </div>
 
     <div id="view-home" class="view-section active">
-        <div id="feed-container"></div>
+        <div id="feed-container"><div class="feed-bottom-fade"></div></div>
         <div id="no-videos-msg" class="hidden absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-black z-40">
             <i class="fas fa-search text-4xl text-gray-700 mb-4"></i>
             <p class="text-gray-500 text-xs font-bold tracking-widest mb-4">NO VIDEOS FOUND</p>
@@ -183,6 +653,12 @@
             </div>
         </div>
         <div class="p-4 pt-0">
+            <div id="trending-tags" class="flex gap-2 overflow-x-auto pb-3 mb-4"></div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="openModal('beats-modal'); loadBeats('')" class="tag-pill flex items-center gap-1"><i class="fas fa-drum"></i> BEATS</button>
+                <button onclick="openModal('challenge-modal'); loadChallenges()" class="tag-pill flex items-center gap-1"><i class="fas fa-trophy"></i> CHALLENGES</button>
+                <button onclick="openModal('battle-modal'); loadBattles()" class="tag-pill flex items-center gap-1" style="color:#ef4444;border-color:#ef4444"><i class="fas fa-fire"></i> BATTLES</button>
+            </div>
             <div id="explore-results-users" class="mb-6 hidden"></div>
             <div id="explore-grid" class="explore-grid"></div>
         </div>
@@ -190,8 +666,13 @@
 
     <div id="view-charts" class="view-section bg-black overflow-y-auto">
         <div class="p-6 pt-20 pb-0 sticky top-0 bg-black/95 backdrop-blur z-20 border-b border-gray-800">
-            <h2 class="text-3xl font-black italic tracking-tighter">DAILY TOP <span class="text-red-600">.</span></h2>
-            <p class="text-[10px] text-gray-400 font-bold mt-1 tracking-widest mb-4">RANKED BY LIKES TODAY</p>
+            <h2 class="text-3xl font-black italic tracking-tighter">TOP <span class="text-red-600">.</span></h2>
+            <p class="text-[10px] text-gray-400 font-bold mt-1 tracking-widest mb-4">RANKED BY ENGAGEMENT</p>
+            <div class="flex gap-2 overflow-x-auto pb-4">
+                <button onclick="setChartMode('daily')" id="chart-mode-daily" class="chart-mode-pill tag-pill active border-white bg-white text-black">DAILY</button>
+                <button onclick="setChartMode('weekly')" id="chart-mode-weekly" class="chart-mode-pill tag-pill">WEEKLY</button>
+                <button onclick="setChartMode('monthly')" id="chart-mode-monthly" class="chart-mode-pill tag-pill">MONTHLY</button>
+            </div>
             <div class="flex gap-2 overflow-x-auto pb-4">
                 <button onclick="setChartGenre('ALL CITY')" class="chart-pill tag-pill active" data-genre="ALL CITY">ALL CITY</button>
                 <button onclick="setChartGenre('dark plugg')" class="chart-pill tag-pill" data-genre="dark plugg">DARK PLUGG</button>
@@ -218,14 +699,18 @@
             <div id="recording-indicator" class="hidden absolute top-4 left-4 bg-red-600 px-3 py-1 rounded text-[10px] font-bold animate-pulse">REC 00:00</div>
             <input id="studio-video-input" type="file" accept="video/*" capture="environment" class="hidden" onchange="handleStudioCapture(event)">
         </div>
-        <div class="h-[35%] bg-black flex flex-col items-center justify-center relative border-t border-gray-800">
+        <div class="h-[35%] bg-black flex flex-col items-center relative border-t border-gray-800">
             <div class="absolute -top-6 bg-zinc-900 px-4 py-1.5 rounded-full border border-gray-700 flex items-center gap-2 cursor-pointer">
                 <i class="fas fa-video text-pink-500 text-xs"></i><span class="text-xs font-bold text-white">Camera / Upload</span>
             </div>
-            <div class="flex w-full justify-around items-center px-10 mb-8 mt-4">
+            <div class="flex w-full justify-around items-center px-10 mt-6">
                 <div onclick="openModal('import-modal')" class="text-center cursor-pointer hover:text-white text-gray-500 transition"><i class="fab fa-instagram text-xl mb-1 text-pink-500"></i><p class="text-[9px] font-bold">IMPORT</p></div>
                 <div id="record-btn" class="w-[72px] h-[72px] rounded-full border-4 border-white flex items-center justify-center cursor-pointer" onclick="toggleRecordState()"><div class="w-[56px] h-[56px] bg-red-600 rounded-full transition-all"></div></div>
-                <div class="text-center cursor-pointer hover:text-white text-gray-500 transition"><i class="fas fa-magic text-xl mb-1"></i><p class="text-[9px] font-bold">FX</p></div>
+                <div class="text-center cursor-pointer hover:text-white text-gray-500 transition" onclick="loadDrafts()"><i class="fas fa-save text-xl mb-1 text-cyan-400"></i><p class="text-[9px] font-bold">DRAFTS</p></div>
+                <div class="text-center cursor-pointer hover:text-white text-gray-500 transition" onclick="openModal('beats-modal'); loadBeats('')"><i class="fas fa-drum text-xl mb-1 text-amber-400"></i><p class="text-[9px] font-bold">BEATS</p></div>
+            </div>
+            <div id="drafts-list" class="hidden absolute bottom-0 left-0 w-full bg-black/95 p-4 max-h-[80%] overflow-y-auto border-t border-zinc-800">
+                <div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-zinc-400 tracking-widest">YOUR DRAFTS</span><i class="fas fa-times text-zinc-500 cursor-pointer text-xs" onclick="document.getElementById('drafts-list').classList.add('hidden')"></i></div>
             </div>
         </div>
     </div>
@@ -238,16 +723,18 @@
                     <div class="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-red-600 to-purple-600 mb-4 shadow-2xl">
                         <img id="profile-avatar-img" src="" class="w-full h-full rounded-full object-cover border-4 border-black bg-black">
                     </div>
-                    <h2 id="profile-username" class="text-3xl font-black flex items-center drop-shadow-lg">@User <span class="v-badge"></span></h2>
+                    <h2 id="profile-username" class="text-3xl font-black flex items-center drop-shadow-lg">@User <span class="v-badge"></span> <span id="tier-badge" class="text-xs ml-2"></span></h2>
                     <p id="profile-bio" class="text-sm font-bold text-gray-300 mt-2 max-w-[80%] text-center drop-shadow-md">Loading...</p>
                     
                     <button id="profile-edit-btn" onclick="openEditProfile()" class="mt-4 border border-white/20 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-[10px] font-bold hover:bg-white/20 transition hidden">EDIT PROFILE</button>
                     
+                    <div id="profile-tags-line" class="flex gap-2 mt-2 flex-wrap justify-center"></div>
+                    <div id="profile-links" class="flex gap-2 mt-3"></div>
                     <div class="flex gap-2 items-center mt-4">
                         <button id="profile-msg-btn" onclick="openChatWithUser(state.viewingProfileUser)" class="hidden bg-zinc-800 border border-zinc-700 w-10 h-10 rounded-full flex items-center justify-center text-white"><i class="fas fa-paper-plane text-xs"></i></button>
                         <button id="profile-follow-btn" onclick="toggleFollow()" class="bg-white text-black px-8 py-2.5 rounded-full text-[11px] font-black tracking-wide hover:scale-105 transition shadow-lg hidden">FOLLOW</button>
+                        <button id="profile-fan-btn" onclick="toggleFan()" class="hidden border border-zinc-700 text-zinc-400 px-5 py-2.5 rounded-full text-[10px] font-bold hover:text-white transition"><i class="fas fa-star"></i> FAN</button>
                     </div>
-
                     <div class="flex gap-8 mt-6">
                         <div class="text-center drop-shadow-md cursor-pointer" onclick="openUserList('followers')">
                             <span class="block font-bold text-xl" id="profile-fans-count">0</span>
@@ -257,6 +744,10 @@
                             <span class="block font-bold text-xl" id="profile-following-count">0</span>
                             <span class="text-[9px] text-gray-300 tracking-widest font-bold">FOLLOWING</span>
                         </div>
+                        <div class="text-center">
+                            <span class="block font-bold text-xl" id="profile-fan-count">0</span>
+                            <span class="text-[9px] text-gray-300 tracking-widest font-bold">⭐ FANS</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -264,10 +755,13 @@
             <div class="profile-tabs">
                 <div id="tab-drops" class="profile-tab active" onclick="switchProfileTab('drops')">DROPS</div>
                 <div id="tab-saved" class="profile-tab" onclick="switchProfileTab('saved')">SAVED</div>
+                <div id="tab-analytics" class="profile-tab" onclick="switchProfileTab('analytics')">STATS</div>
+                <div id="tab-connects" class="profile-tab" onclick="switchProfileTab('connects')">CONNECT</div>
             </div>
 
             <div class="p-4">
                 <div id="profile-videos-grid" class="explore-grid"></div>
+                <div id="connects-list" class="hidden"></div>
             </div>
         </div>
     </div>
@@ -322,8 +816,28 @@
                         <input type="file" id="hidden-header-input" name="header_file" accept="image/*" class="hidden" onchange="previewImage(this, 'preview-header')">
                     </div>
                 </div>
+                <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest text-center">HEADER STYLE</p>
+                <div class="flex gap-2 flex-wrap justify-center mb-6">
+                    <button type="button" onclick="setHeaderGradient('')" class="w-10 h-10 rounded-full border-2 border-zinc-700" style="background:#0a0a0a" title="Default"></button>
+                    <button type="button" onclick="setHeaderGradient('header-dark')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-dark" title="Dark"></button>
+                    <button type="button" onclick="setHeaderGradient('header-blood')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-blood" title="Blood Red"></button>
+                    <button type="button" onclick="setHeaderGradient('header-purple')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-purple" title="Purple Haze"></button>
+                    <button type="button" onclick="setHeaderGradient('header-neon')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-neon" title="Neon"></button>
+                    <button type="button" onclick="setHeaderGradient('header-gold')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-gold" title="Gold"></button>
+                    <button type="button" onclick="setHeaderGradient('header-ocean')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-ocean" title="Ocean"></button>
+                    <button type="button" onclick="setHeaderGradient('header-amber')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-amber" title="Amber"></button>
+                    <button type="button" onclick="setHeaderGradient('header-gray')" class="w-10 h-10 rounded-full border-2 border-zinc-700 header-gray" title="Gray"></button>
+                </div>
                 <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">BIO</p>
                 <textarea name="bio" id="edit-bio-input" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-6 resize-none" rows="3" placeholder="Tell them who you are..."></textarea>
+                <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">LINKS</p>
+                <div id="edit-links-container" class="space-y-2 mb-4">
+                    <div class="flex gap-2 items-center">
+                        <input type="text" id="link-platform-0" placeholder="Platform (SoundCloud, Spotify...)" class="flex-1 bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-xs outline-none focus:border-white">
+                        <input type="url" id="link-url-0" placeholder="https://..." class="flex-1 bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-xs outline-none focus:border-white">
+                    </div>
+                </div>
+                <button type="button" onclick="addLinkRow()" class="w-full bg-zinc-900 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-widest border border-zinc-700 mb-6 hover:bg-zinc-800 transition">+ ADD LINK</button>
                 <button type="submit" id="save-profile-btn" class="w-full bg-white text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg hover:scale-[1.02] transition">SAVE CHANGES</button>
             </form>
         </div>
@@ -352,14 +866,40 @@
     <div id="post-details-modal" class="full-modal">
         <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
             <h3 class="font-black text-lg">FINALIZE DROP</h3>
-            <button onclick="closeModal('post-details-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+            <button onclick="closeModal('post-details-modal'); resetPendingVideo()" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
         </div>
-        <div class="p-6 flex flex-col h-full">
+        <div class="p-6 flex flex-col overflow-y-auto h-full">
+             <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">SONG TITLE</p>
+             <input id="post-song-title" type="text" class="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-sm outline-none focus:border-white mb-4" placeholder="Track name (optional)">
+             <div class="flex gap-3 mb-4">
+                 <div class="flex-1">
+                     <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">PRODUCER</p>
+                     <input id="post-producer" type="text" class="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-sm outline-none focus:border-white" placeholder="Producer tag (optional)">
+                 </div>
+             </div>
              <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">CAPTION</p>
-             <textarea id="post-caption" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-6 resize-none" rows="4" placeholder="Say something about this track..."></textarea>
+             <textarea id="post-caption" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-4 resize-none" rows="2" placeholder="Say something about this track..."></textarea>
+             <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">LYRICS (optional)</p>
+             <textarea id="post-lyrics" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-4 resize-none" rows="3" placeholder="Paste your lyrics here..."></textarea>
+             <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">COLLABORATORS (optional)</p>
+             <input id="post-collabs" type="text" class="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-sm outline-none focus:border-white mb-4" placeholder="@username1 @username2">
              <p class="text-gray-400 text-xs font-bold mb-2 tracking-widest">HASHTAGS (Genre)</p>
              <input id="post-tags" type="text" class="w-full bg-zinc-900 border border-zinc-700 p-4 rounded-xl text-white text-sm outline-none focus:border-white mb-2" placeholder="#darkplugg #jerk #freestyle">
-             <button id="publish-btn" onclick="savePostDetails()" class="w-full bg-red-600 text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg shadow-red-900/50 hover:bg-red-500 transition">PUBLISH VIDEO</button>
+             <div class="flex items-center gap-2 mb-2">
+                 <input type="checkbox" id="schedule-toggle" onchange="toggleSchedulePicker()" class="accent-red-600">
+                 <label for="schedule-toggle" class="text-[10px] font-bold text-zinc-400">Schedule for later</label>
+             </div>
+             <div id="schedule-picker" class="hidden mb-3">
+                 <input type="datetime-local" id="schedule-datetime" class="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-xs outline-none focus:border-white">
+             </div>
+             <div class="flex items-center gap-2 mb-3">
+                 <input type="checkbox" id="vault-toggle" class="accent-amber-600">
+                 <label for="vault-toggle" class="text-[10px] font-bold text-zinc-400"><i class="fas fa-lock text-amber-500"></i> Vault — exclusive to fans</label>
+             </div>
+             <div class="flex gap-3">
+                 <button id="draft-btn" onclick="savePostAsDraft()" class="flex-1 bg-zinc-800 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-widest border border-zinc-700 hover:bg-zinc-700 transition">SAVE DRAFT</button>
+                 <button id="publish-btn" onclick="savePostDetails()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg shadow-red-900/50 hover:bg-red-500 transition">PUBLISH</button>
+             </div>
         </div>
     </div>
 
@@ -387,6 +927,49 @@
             <i class="fas fa-times text-zinc-500 cursor-pointer" onclick="closeSheet('notifications-sheet')"></i>
         </div>
         <div class="flex-1 overflow-y-auto" id="notifications-list"></div>
+    </div>
+
+    <div id="sound-sheet" class="bottom-sheet h-[50%]">
+        <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-2" onclick="closeSheet('sound-sheet')"></div>
+        <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+            <h3 class="font-bold text-sm tracking-wide">USING THIS SOUND</h3>
+            <i class="fas fa-times text-zinc-500 cursor-pointer" onclick="closeSheet('sound-sheet')"></i>
+        </div>
+        <div id="sound-videos-list" class="grid grid-cols-3 gap-1 p-2 overflow-y-auto"></div>
+    </div>
+
+    <div id="beats-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">BEATS</h3>
+            <button onclick="closeModal('beats-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="p-4 flex gap-2 overflow-x-auto border-b border-zinc-800">
+            <button onclick="loadBeats('')" class="tag-pill active">ALL</button>
+            <button onclick="loadBeats('darkplugg')" class="tag-pill">DARK PLUGG</button>
+            <button onclick="loadBeats('jerk')" class="tag-pill">JERK</button>
+        </div>
+        <div id="beats-list" class="flex-1 overflow-y-auto p-4"><p class="text-zinc-500 text-xs text-center mt-8">Loading beats...</p></div>
+    </div>
+
+    <div id="battle-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">🔥 BEAT BATTLES</h3>
+            <button onclick="closeModal('battle-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div class="flex gap-2 p-4 border-b border-zinc-800 overflow-x-auto">
+            <button onclick="loadBattles('')" class="tag-pill active">ALL</button>
+            <button onclick="loadBattles('voting')" class="tag-pill">VOTING</button>
+            <button onclick="loadBattles('closed')" class="tag-pill">CLOSED</button>
+        </div>
+        <div id="battle-list" class="flex-1 overflow-y-auto p-4"><p class="text-zinc-500 text-xs text-center mt-8">Loading battles...</p></div>
+    </div>
+
+    <div id="challenge-modal" class="full-modal">
+        <div class="p-4 pt-12 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-black text-lg">CHALLENGES</h3>
+            <button onclick="closeModal('challenge-modal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fas fa-times text-xs"></i></button>
+        </div>
+        <div id="challenge-list" class="flex-1 overflow-y-auto p-4"><p class="text-zinc-500 text-xs text-center mt-8">Loading...</p></div>
     </div>
 
     <div id="filter-sheet" class="bottom-sheet h-[40%]">
@@ -419,16 +1002,31 @@
                 </div>
                 <div class="w-2 h-2 bg-red-500 rounded-full hidden" id="menu-notif-dot"></div>
             </div>
+            <div id="admin-section" class="hidden mt-6">
+                <p class="text-[10px] font-bold text-zinc-500 tracking-widest mb-2">ADMIN</p>
+                <button onclick="openAdminReports()" class="w-full py-3 text-xs font-bold text-amber-500 bg-zinc-900 rounded-xl border border-zinc-800 mb-2">VIEW REPORTS</button>
+                <div id="admin-reports-list" class="hidden mt-2 max-h-40 overflow-y-auto space-y-1"></div>
+            </div>
             <button onclick="handleLogout()" class="w-full py-4 mt-8 text-red-500 font-bold text-xs uppercase bg-zinc-900 rounded-xl border border-zinc-800">Log Out</button>
         </div>
     </div>
 
+    <div id="mini-player" class="hidden absolute bottom-[75px] left-0 w-full bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 px-4 py-2 z-50 flex items-center gap-3 cursor-pointer" onclick="switchView('home')">
+        <i class="fas fa-music text-white text-xs"></i>
+        <div class="flex-1 min-w-0">
+            <p id="mini-player-title" class="text-xs font-bold text-white truncate">Now Playing</p>
+            <p id="mini-player-user" class="text-[9px] text-zinc-400 truncate">@username</p>
+        </div>
+        <button id="mini-player-play-btn" onclick="event.stopPropagation(); toggleMiniPlay()" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white text-xs"><i class="fas fa-pause"></i></button>
+        <button onclick="event.stopPropagation(); closeMiniPlayer()" class="text-zinc-500 text-xs"><i class="fas fa-times"></i></button>
+    </div>
+
     <div class="bottom-nav">
-        <div class="nav-item active" id="nav-home" onclick="switchView('home')"><i class="fas fa-home"></i></div>
-        <div class="nav-item" id="nav-explore" onclick="switchView('explore')"><i class="fas fa-search"></i></div>
+        <div class="nav-item active" id="nav-home" onclick="switchView('home')"><i class="fas fa-home"></i><span class="nav-label">Home</span></div>
+        <div class="nav-item" id="nav-explore" onclick="switchView('explore')"><i class="fas fa-search"></i><span class="nav-label">Explore</span></div>
         <div class="nav-item" id="nav-studio" onclick="switchView('studio')"><div class="studio-nav-btn"><i class="fas fa-plus"></i></div></div>
-        <div class="nav-item" id="nav-charts" onclick="switchView('charts')"><i class="fas fa-chart-bar"></i></div>
-        <div class="nav-item" id="nav-profile" onclick="switchToMyProfile()"><i class="fas fa-user"></i></div>
+        <div class="nav-item" id="nav-charts" onclick="switchView('charts')"><i class="fas fa-chart-bar"></i><span class="nav-label">Charts</span></div>
+        <div class="nav-item" id="nav-profile" onclick="switchToMyProfile()"><i class="fas fa-user"></i><span class="nav-label">Profile</span></div>
     </div>
 
 </div>
@@ -437,8 +1035,8 @@
     const VERIFIED_SVG = `<svg class="verified-icon" viewBox="0 0 24 24" fill="none"><path d="M22.5 12.0001C22.5 10.7001 22.0227 9.53945 21.2386 8.63605L21.825 7.02505C21.9841 6.5863 21.825 6.09505 21.4273 5.82945L20.0477 4.90895C20.0205 3.7158 19.3307 2.6612 18.2705 2.13055L17.1568 1.01693C16.8386 0.698745 16.3875 0.56602 15.9455 0.66147L14.4068 1.00238C13.5841 0.453295 12.5932 0.13623 11.5341 0.13623C10.475 0.13623 9.48409 0.453295 8.66136 1.00238L7.12273 0.66147C6.68068 0.56602 6.22955 0.698745 5.91136 1.01693L4.79773 2.13055C3.7375 2.6612 3.04773 3.7158 3.02045 4.90895L1.64091 5.82945C1.24318 6.09505 1.08409 6.5863 1.24318 7.02505L1.82955 8.63605C1.04545 9.53945 0.568182 10.7001 0.568182 12.0001C0.568182 13.3001 1.04545 14.4607 1.82955 15.3641L1.24318 16.9752C1.08409 17.4139 1.24318 17.9052 1.64091 18.1708L3.02045 19.0913C3.04773 20.2844 3.7375 21.339 4.79773 21.8696L5.91136 22.9833C6.22955 23.3015 6.68068 23.4342 7.12273 23.3387L8.66136 22.9978C9.48409 23.5469 10.475 23.864 11.5341 23.864C12.5932 23.864 13.5841 23.5469 14.4068 22.9978L15.9455 23.3387C16.3875 23.4342 16.8386 23.3015 17.1568 22.9833L18.2705 21.8696C19.3307 21.339 20.0205 20.2844 20.0477 19.0913L21.4273 18.1708C21.825 17.9052 21.9841 17.4139 21.825 16.9752L21.2386 15.3641C22.0227 14.4607 22.5 13.3001 22.5 12.0001Z" fill="white"/><path d="M16.5 8.5L10.5 14.5L7.5 11.5" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
     let state = {
-        feed: [], displayFeed: [], currentGridFeed: [], currentIndex: 0, currentUser: null, authToken: null, usersDb: {},
-        currentView: 'home', currentChartGenre: 'ALL CITY', currentGenreFilter: 'ALL CITY', pendingEditVideo: null, pendingUploadFile: null, pendingPreviewUrl: null, authMode: 'register',
+        feed: [], recommendedFeed: [], displayFeed: [], currentGridFeed: [], currentIndex: 0, currentUser: null, authToken: null, usersDb: {}, socket: null, radioMode: false, radioGenre: '', radioHistory: [],
+        currentView: 'home', feedMode: 'all', currentChartGenre: 'ALL CITY', currentGenreFilter: 'ALL CITY', pendingEditVideo: null, pendingUploadFile: null, pendingPreviewUrl: null, authMode: 'register',
         viewingProfileUser: null,
         isGlobalMuted: true,
         saved: [],
@@ -497,6 +1095,14 @@
         document.getElementById('import-file-input').value = '';
     }
 
+    function skeleton(count = 3) {
+        let html = '';
+        for (let i = 0; i < count; i++) {
+            html += `<div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div>`;
+        }
+        return html;
+    }
+
     function getAuthHeaders(existingHeaders = {}) {
         return state.authToken
             ? { ...existingHeaders, Authorization: `Bearer ${state.authToken}` }
@@ -530,7 +1136,6 @@
 
         if (response.status === 401) {
             handleLogout(false);
-            document.getElementById('auth-screen').style.display = 'flex';
             throw new Error(payload?.message || 'Please log in again.');
         }
 
@@ -541,14 +1146,46 @@
         return payload;
     }
 
-    function getGenreFilteredFeed(source = state.feed) {
-        if (state.currentGenreFilter === 'ALL CITY') return [...source];
+    async function toggleRadioMode() {
+        state.radioMode = !state.radioMode;
+        document.getElementById('feed-mode-radio').querySelector('span').className = state.radioMode ? 'text-[10px] font-bold text-white tracking-wide' : 'text-[10px] font-bold text-zinc-500 tracking-wide';
+        document.getElementById('feed-mode-radio').style.borderColor = state.radioMode ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.05)';
+        if (state.radioMode) {
+            state.radioGenre = state.currentGenreFilter === 'ALL CITY' ? '' : state.currentGenreFilter;
+            state.radioHistory = [];
+            const data = await apiRequest(`/api/radio?genre=${encodeURIComponent(state.radioGenre)}&exclude=${state.radioHistory.join(',')}&limit=50`);
+            if (Array.isArray(data) && data.length) {
+                state.displayFeed = data.map(v => ({ ...v, id: String(v.id || v.video || ''), likes: Number(v.likes || 0), username: v.username || 'Unknown', video: sanitizeUrl(v.video || '') }));
+                state.currentIndex = 0;
+                renderFeed();
+            }
+        } else {
+            state.displayFeed = getGenreFilteredFeed();
+            state.currentIndex = 0;
+            renderFeed();
+        }
+    }
+
+    function setFeedMode(mode) {
+        state.feedMode = mode;
+        document.getElementById('feed-mode-all').querySelector('span').className = mode === 'all' ? 'text-[10px] font-bold text-white tracking-wide' : 'text-[10px] font-bold text-zinc-500 tracking-wide';
+        document.getElementById('feed-mode-all').style.borderColor = mode === 'all' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
+        document.getElementById('feed-mode-for-you').querySelector('span').className = mode === 'for_you' ? 'text-[10px] font-bold text-white tracking-wide' : 'text-[10px] font-bold text-zinc-500 tracking-wide';
+        document.getElementById('feed-mode-for-you').style.borderColor = mode === 'for_you' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
+        state.displayFeed = getGenreFilteredFeed();
+        state.currentIndex = 0;
+        renderFeed();
+        renderExploreGrid();
+    }
+
+    function getGenreFilteredFeed(source) {
+        const base = source || (state.feedMode === 'for_you' ? state.recommendedFeed : state.feed);
+        if (state.currentGenreFilter === 'ALL CITY') return [...base];
         const genre = state.currentGenreFilter.toLowerCase();
-        return source.filter(video => Array.isArray(video.tags) && video.tags.some(tag => String(tag).toLowerCase().includes(genre)));
+        return base.filter(video => Array.isArray(video.tags) && video.tags.some(tag => String(tag).toLowerCase().includes(genre)));
     }
 
     function updateGenreFilterUi() {
-        document.getElementById('current-genre-display').innerText = state.currentGenreFilter;
         document.querySelectorAll('#filter-sheet .tag-pill').forEach(button => {
             const isActive = button.innerText.trim().toUpperCase() === state.currentGenreFilter;
             button.classList.toggle('active', isActive);
@@ -591,7 +1228,8 @@
 
         if (!storedUser || !storedToken) {
             clearStoredAuth();
-            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('landing-page').classList.add('show');
+            initLandingAnimations();
             updateGenreFilterUi();
             updateStudioPreview('');
             return;
@@ -599,14 +1237,32 @@
 
         state.currentUser = storedUser;
         state.authToken = storedToken;
-        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('landing-page').classList.remove('show');
         document.getElementById('import_username_hidden').value = state.currentUser;
         document.getElementById('edit-username-hidden').value = state.currentUser;
         document.getElementById('my-comment-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser)}&background=333&color=fff`;
         updateGenreFilterUi();
         updateStudioPreview('');
         loadData();
-        startNotificationPolling();
+        // Socket.IO for real-time notifications
+        state.socket = null;
+        if (typeof io !== 'undefined') {
+            try {
+                state.socket = io({ auth: { token: state.authToken } });
+                state.socket.on('notification', (n) => {
+                    const dot = document.getElementById('notif-badge');
+                    const menuDot = document.getElementById('menu-notif-dot');
+                    if (dot) dot.classList.remove('hidden');
+                    if (menuDot) menuDot.classList.remove('hidden');
+                });
+                state.socket.on('connect_error', () => { startNotificationPolling(); });
+            } catch { startNotificationPolling(); }
+        } else {
+            startNotificationPolling();
+        }
+
+        setTimeout(initPullToRefresh, 500);
+        setTimeout(initAdmin, 1000);
     }
 
     // --- AUTH ---
@@ -628,11 +1284,20 @@
         }
     }
 
+    function setButtonLoading(btnId, loading, text) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.disabled = loading;
+        btn.style.opacity = loading ? '0.6' : '1';
+        btn.style.pointerEvents = loading ? 'none' : 'auto';
+        if (text) btn.innerText = text;
+    }
+
     async function handleAuth() {
         const u = document.getElementById('auth-username').value.trim();
         const p = document.getElementById('auth-password').value;
-        if (!u || !p) return alert("Please fill all fields");
-        document.getElementById('auth-btn').innerText = "LOADING...";
+        if (!u || !p) return showToast("Please fill all fields", "error");
+        setButtonLoading('auth-btn', true, "LOADING...");
         try {
             const data = await apiRequest('/api/auth', {
                 method: 'POST',
@@ -641,9 +1306,36 @@
             state.currentUser = data.user.username;
             state.authToken = data.token;
             setStoredAuth(data.user.username, data.token);
-            window.location.reload();
-        } catch(e) { alert(e.message || "Connection Error"); }
-        document.getElementById('auth-btn').innerText = state.authMode === 'register' ? "SIGN UP" : "LOGIN";
+            startApp();
+        } catch(e) { showToast(e.message || "Connection Error", "error"); }
+        setButtonLoading('auth-btn', false, state.authMode === 'register' ? "SIGN UP" : "LOGIN");
+    }
+
+    function startApp() {
+        document.getElementById('landing-page').classList.remove('show');
+        document.getElementById('auth-username').value = '';
+        document.getElementById('auth-password').value = '';
+        document.getElementById('import_username_hidden').value = state.currentUser;
+        document.getElementById('edit-username-hidden').value = state.currentUser;
+        document.getElementById('my-comment-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser)}&background=333&color=fff`;
+        updateGenreFilterUi();
+        updateStudioPreview('');
+        loadData();
+        if (typeof io !== 'undefined') {
+            try {
+                state.socket = io({ auth: { token: state.authToken } });
+                state.socket.on('notification', () => {
+                    const dot = document.getElementById('notif-badge');
+                    const menuDot = document.getElementById('menu-notif-dot');
+                    if (dot) dot.classList.remove('hidden');
+                    if (menuDot) menuDot.classList.remove('hidden');
+                });
+                state.socket.on('connect_error', () => { startNotificationPolling(); });
+            } catch { startNotificationPolling(); }
+        } else { startNotificationPolling(); }
+        setTimeout(initPullToRefresh, 500);
+        setTimeout(initAdmin, 1000);
+        screenFlash();
     }
 
     function handleLogout(shouldReload = true) {
@@ -657,9 +1349,16 @@
             clearInterval(state.notificationPollInterval);
             state.notificationPollInterval = null;
         }
+        if (state.socket) { state.socket.disconnect(); state.socket = null; }
         state.currentUser = null;
         state.authToken = null;
-        if (shouldReload) window.location.reload();
+        state.feed = [];
+        state.recommendedFeed = [];
+        state.displayFeed = [];
+        document.getElementById('view-home').classList.remove('active');
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.getElementById('landing-page').classList.add('show');
+        initLandingAnimations();
     }
 
     // --- DATA ---
@@ -695,6 +1394,11 @@
             });
         } catch(e) { console.log("Feed Fetch Error", e); }
 
+        try {
+            const rec = await apiRequest('/api/feed/recommended?user=' + encodeURIComponent(state.currentUser) + '&limit=50&t=' + Date.now());
+            state.recommendedFeed = Array.isArray(rec) ? rec.map(v => ({ ...v, id: String(v.id || v.video || ''), tags: v.tags || ['rap'], likes: Number(v.likes || 0), verified: true, comments: v.comments || [], comments_count: Number(v.comments_count || 0), username: v.username || 'Unknown', video: sanitizeUrl(v.video || '') })) : [];
+        } catch(e) { console.log("Recommended Fetch Error", e); }
+
         state.displayFeed = getGenreFilteredFeed();
         const sharedVideoId = new URLSearchParams(window.location.search).get('video');
         if (sharedVideoId) {
@@ -724,10 +1428,11 @@
         
         // Instant UI Reset
         document.getElementById('profile-username').innerHTML = `@${escapeHtml(username)} ${VERIFIED_SVG}`;
-        document.getElementById('profile-bio').innerText = "Loading...";
+        document.getElementById('profile-bio').innerHTML = skeleton(2);
         document.getElementById('profile-avatar-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=000&color=fff`;
         document.getElementById('profile-header-container').style.backgroundImage = 'none';
         document.getElementById('profile-header-container').style.backgroundColor = '#111';
+        document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ');
         document.getElementById('profile-videos-grid').innerHTML = '';
         
         // Buttons
@@ -735,6 +1440,9 @@
         document.getElementById('profile-edit-btn').classList.toggle('hidden', !isMe);
         document.getElementById('profile-follow-btn').classList.toggle('hidden', isMe);
         document.getElementById('profile-msg-btn').classList.toggle('hidden', isMe);
+        document.getElementById('profile-fan-btn').classList.toggle('hidden', isMe);
+        document.getElementById('tab-analytics').classList.toggle('hidden', !isMe);
+        document.getElementById('tab-connects').classList.toggle('hidden', !isMe);
 
         fetchProfileData(username);
     }
@@ -751,10 +1459,107 @@
             document.getElementById('profile-bio').innerText = data.bio || "No bio yet.";
             document.getElementById('profile-fans-count').innerText = data.followers_count;
             document.getElementById('profile-following-count').innerText = data.following_count;
+
+            // Tier badge + avatar border
+            const tierEl = document.getElementById('tier-badge');
+            const tiers = { emerging: ['🌱', '#555'], rising: ['🔥', '#f59e0b'], verified: ['✅', '#22c55e'], featured: ['👑', '#ef4444'] };
+            const t = tiers[data.tier] || tiers.emerging;
+            tierEl.textContent = t[0] + ' ' + data.tier.toUpperCase();
+            tierEl.style.color = t[1];
+            const avatarBorderEl = document.querySelector('.tier-avatar-border') || (() => { const el = document.createElement('div'); el.className = 'tier-avatar-border'; document.querySelector('#profile-avatar-img').parentNode.style.position = 'relative'; document.querySelector('#profile-avatar-img').parentNode.appendChild(el); return el; })();
+            if (avatarBorderEl) {
+                avatarBorderEl.className = 'tier-avatar-border tier-border-' + (data.tier || 'emerging');
+                avatarBorderEl.style.cssText = 'position:absolute;top:-4px;left:-4px;right:-4px;bottom:-4px;border-radius:50%;pointer-events:none;';
+                if (data.streak > 6) avatarBorderEl.classList.add('streak-active');
+            }
+            // Custom header gradient
+            const headerGrad = data.header_gradient || '';
+            const hContainer = document.getElementById('profile-header-container');
+            if (headerGrad && hContainer) {
+                hContainer.style.backgroundImage = 'none';
+                hContainer.className = hContainer.className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + ' ' + headerGrad;
+            }
+
+            // Fan button
+            const fanBtn = document.getElementById('profile-fan-btn');
+            if (state.viewingProfileUser !== state.currentUser) {
+                fanBtn.classList.remove('hidden');
+                if (data.is_fan) { fanBtn.innerHTML = '<i class="fas fa-star"></i> ⭐ FAN'; fanBtn.style.borderColor = '#f59e0b'; fanBtn.style.color = '#f59e0b'; }
+                else { fanBtn.innerHTML = '<i class="far fa-star"></i> FAN'; fanBtn.style.borderColor = '#333'; fanBtn.style.color = '#888'; }
+            } else { fanBtn.classList.add('hidden'); }
+            document.getElementById('profile-fan-count').innerText = data.fan_count || 0;
+
+            // Collab profile
+            const tagsLine = document.getElementById('profile-tags-line');
+            tagsLine.innerHTML = '';
+            if (data.collab_profile?.looking) {
+                tagsLine.innerHTML = `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-cyan-400"><i class="fas fa-handshake"></i> OPEN TO COLLABS</span>`;
+                if (data.collab_profile.role) tagsLine.innerHTML += `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-zinc-400">${data.collab_profile.role.toUpperCase()}</span>`;
+            }
+            if (data.mentor) tagsLine.innerHTML += `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-purple-400"><i class="fas fa-graduation-cap"></i> MENTOR</span>`;
+
+            // Render momentum
+            const momMeter = document.querySelector('.momentum-meter') || (() => { const e = document.createElement('div'); e.className = 'momentum-meter'; document.getElementById('profile-bio').parentNode.insertBefore(e, document.getElementById('profile-bio').nextSibling); return e; })();
+            if (data.momentum !== undefined) {
+                const score = Math.min(data.momentum, 100);
+                const color = score > 70 ? '#22c55e' : score > 40 ? '#f59e0b' : '#ef4444';
+                momMeter.style.cssText = `margin-top:8px;text-align:center`;
+                momMeter.innerHTML = `<div style="display:flex;align-items:center;gap:8px;justify-content:center"><span style="font-size:10px;font-weight:700;color:#888">MOMENTUM</span><span style="font-size:14px;font-weight:900;color:${color}">${score}</span></div><div style="width:120px;height:3px;background:#222;border-radius:2px;margin:4px auto 0;overflow:hidden"><div style="width:${score}%;height:100%;background:${color};border-radius:2px;transition:width 0.5s"></div></div>`;
+            }
+
+            // Render streak
+            const streakEl = document.querySelector('.profile-streak');
+            if (data.streak > 0) {
+                if (!streakEl) {
+                    const container = document.getElementById('profile-bio').parentNode;
+                    const el = document.createElement('p');
+                    el.className = 'profile-streak text-[10px] font-bold mt-2';
+                    container.insertBefore(el, document.getElementById('profile-links'));
+                }
+                const el = document.querySelector('.profile-streak');
+                if (el) el.innerHTML = `<span style="color:#f59e0b"><i class="fas fa-fire"></i> ${data.streak}-day streak</span>`;
+            }
+
+            // Render achievements
+            const achEl = document.querySelector('.profile-achievements');
+            if (Array.isArray(data.achievements) && data.achievements.length) {
+                if (!achEl) {
+                    const container = document.getElementById('profile-links');
+                    const el = document.createElement('div');
+                    el.className = 'profile-achievements flex gap-1 mt-2 flex-wrap justify-center';
+                    container.parentNode.insertBefore(el, container);
+                }
+                const el = document.querySelector('.profile-achievements');
+                if (el) {
+                    const labels = { first_drop: '🎤', ten_drops: '💿', hundred_views: '👁️', thousand_views: '🔥', hundred_likes: '❤️', streak_7: '⭐', streak_30: '👑' };
+                    el.innerHTML = data.achievements.map((a) => `<span title="${a}" style="font-size:16px;opacity:0.7">${labels[a] || '🏆'}</span>`).join('');
+                }
+            }
+
+            // Render links
+            const linksEl = document.getElementById('profile-links');
+            linksEl.innerHTML = '';
+            if (Array.isArray(data.links)) {
+                data.links.forEach((l) => {
+                    let icon = 'fa-link';
+                    const p = (l.platform || '').toLowerCase();
+                    if (p.includes('soundcloud') || p.includes('sc')) icon = 'fab fa-soundcloud';
+                    else if (p.includes('spotify')) icon = 'fab fa-spotify';
+                    else if (p.includes('youtube') || p.includes('yt')) icon = 'fab fa-youtube';
+                    else if (p.includes('instagram') || p.includes('ig')) icon = 'fab fa-instagram';
+                    linksEl.innerHTML += `<a href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm border border-white/10 hover:bg-white/20 transition"><i class="${icon}"></i></a>`;
+                });
+            }
             
             // Only update images if data exists, otherwise keep placeholder
             if(data.avatar) document.getElementById('profile-avatar-img').src = sanitizeUrl(data.avatar);
-            if(data.header) document.getElementById('profile-header-container').style.backgroundImage = `url('${sanitizeUrl(data.header)}')`;
+            if (data.header_gradient) {
+                document.getElementById('profile-header-container').style.backgroundImage = 'none';
+                document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + ' ' + data.header_gradient;
+            } else if(data.header) {
+                document.getElementById('profile-header-container').style.backgroundImage = `url('${sanitizeUrl(data.header)}')`;
+                document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ');
+            }
             
             const btn = document.getElementById('profile-follow-btn');
             if(data.is_following) {
@@ -775,6 +1580,22 @@
 
     function renderProfileVideos() {
         const grid = document.getElementById('profile-videos-grid');
+
+        if (state.currentProfileTab === 'analytics') {
+            renderAnalytics();
+            return;
+        }
+
+        if (state.currentProfileTab === 'connects') {
+            grid.classList.add('hidden');
+            document.getElementById('connects-list').classList.remove('hidden');
+            loadConnects();
+            return;
+        } else {
+            grid.classList.remove('hidden');
+            document.getElementById('connects-list').classList.add('hidden');
+        }
+
         grid.innerHTML = '';
         const userVideos = state.feed.filter(v => v.username === state.viewingProfileUser);
         const savedVideos = state.feed.filter(v => state.saved.includes(String(v.id)));
@@ -789,6 +1610,31 @@
         source.forEach((item, i) => {
             grid.innerHTML += `<div class="explore-item" onclick='openUserProfileVideo(${jsString(item.id)})'><video src="${sanitizeUrl(item.video)}" muted></video><div class="explore-overlay"><p class="text-[10px] font-bold">@${escapeHtml(item.username)}</p></div></div>`;
         });
+    }
+
+    async function renderAnalytics() {
+        const grid = document.getElementById('profile-videos-grid');
+        grid.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Loading stats...</p>';
+        if (state.viewingProfileUser !== state.currentUser) {
+            grid.innerHTML = '<p class="text-zinc-500 text-xs col-span-2 text-center mt-8">Stats are only available for your own profile.</p>';
+            return;
+        }
+        try {
+            const data = await apiRequest('/api/profile/analytics?user=' + encodeURIComponent(state.currentUser));
+            grid.innerHTML = `
+                <div class="col-span-2 grid grid-cols-2 gap-4 mt-4">
+                    <div class="bg-zinc-900 rounded-xl p-5 text-center border border-zinc-800"><span class="block text-3xl font-black text-white">${data.total_drops}</span><span class="text-[9px] font-bold text-zinc-500 tracking-widest">DROPS</span></div>
+                    <div class="bg-zinc-900 rounded-xl p-5 text-center border border-zinc-800"><span class="block text-3xl font-black text-red-500">${data.total_views}</span><span class="text-[9px] font-bold text-zinc-500 tracking-widest">VIEWS</span></div>
+                    <div class="bg-zinc-900 rounded-xl p-5 text-center border border-zinc-800"><span class="block text-3xl font-black text-pink-500">${data.total_likes}</span><span class="text-[9px] font-bold text-zinc-500 tracking-widest">LIKES</span></div>
+                    <div class="bg-zinc-900 rounded-xl p-5 text-center border border-zinc-800"><span class="block text-3xl font-black text-yellow-500">${data.total_saves}</span><span class="text-[9px] font-bold text-zinc-500 tracking-widest">SAVES</span></div>
+                </div>
+                <div class="col-span-2 bg-zinc-900 rounded-xl p-5 mt-4 border border-zinc-800 text-center">
+                    <span class="block text-3xl font-black text-green-500">${data.follower_count}</span>
+                    <span class="text-[9px] font-bold text-zinc-500 tracking-widest">FOLLOWERS</span>
+                </div>`;
+        } catch (err) {
+            grid.innerHTML = '<p class="text-zinc-500 text-xs col-span-2 text-center mt-8">Could not load stats.</p>';
+        }
     }
 
     function openUserProfileVideo(id) {
@@ -815,14 +1661,40 @@
         renderProfileVideos();
     }
 
+    let linkRowCount = 0;
+    let selectedHeaderGradient = '';
+    function setHeaderGradient(cls) {
+        selectedHeaderGradient = cls;
+        document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + (cls ? ' ' + cls : '');
+        document.getElementById('profile-header-container').style.backgroundImage = 'none';
+    }
+    function addLinkRow(platform, url) {
+        const container = document.getElementById('edit-links-container');
+        const idx = linkRowCount++;
+        container.innerHTML += `
+            <div class="flex gap-2 items-center">
+                <input type="text" id="link-platform-${idx}" placeholder="Platform" value="${escapeHtml(platform || '')}" class="flex-1 bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-xs outline-none focus:border-white">
+                <input type="url" id="link-url-${idx}" placeholder="https://..." value="${escapeHtml(url || '')}" class="flex-1 bg-zinc-900 border border-zinc-700 p-3 rounded-xl text-white text-xs outline-none focus:border-white">
+            </div>`;
+    }
+
     async function openEditProfile() {
         try {
             const data = await apiRequest(`/api/profile?user=${encodeURIComponent(state.currentUser)}&viewer=${encodeURIComponent(state.currentUser)}&t=${Date.now()}`);
             document.getElementById('edit-bio-input').value = data.bio || '';
             document.getElementById('preview-avatar').src = sanitizeUrl(data.avatar || '');
             document.getElementById('preview-header').src = sanitizeUrl(data.header || '');
+            if (data.header_gradient) { setHeaderGradient(data.header_gradient); }
+            else { selectedHeaderGradient = ''; }
+            // Reset links
+            linkRowCount = 0;
+            document.getElementById('edit-links-container').innerHTML = '';
+            if (Array.isArray(data.links)) {
+                data.links.forEach((l) => addLinkRow(l.platform, l.url));
+            }
+            if (linkRowCount === 0) addLinkRow();
             openModal('edit-profile-modal');
-        } catch(err) { alert(err.message || "Could not load your profile"); }
+        } catch(err) { showToast(err.message || "Could not load your profile", "error"); }
     }
 
     /* --- PROFILE UPDATE --- */
@@ -836,18 +1708,33 @@
 
     async function handleProfileUpdate(e) {
         e.preventDefault();
-        const btn = document.getElementById('save-profile-btn');
-        btn.innerText = "SAVING...";
+        setButtonLoading('save-profile-btn', true, "SAVING...");
         const form = document.getElementById('profile-form');
         const fd = new FormData(form);
+
+        // Collect links
+        const links = [];
+        for (let i = 0; i < linkRowCount; i++) {
+            const platEl = document.getElementById(`link-platform-${i}`);
+            const urlEl = document.getElementById(`link-url-${i}`);
+            if (platEl && urlEl && platEl.value.trim() && urlEl.value.trim()) {
+                links.push({ platform: platEl.value.trim(), url: urlEl.value.trim() });
+            }
+        }
+        if (links.length > 0) {
+            fd.append('links', JSON.stringify(links));
+        }
+        if (selectedHeaderGradient) {
+            fd.append('header_gradient', selectedHeaderGradient);
+        }
         
         try {
             await apiRequest('/api/profile/update', { method: 'POST', body: fd });
             closeModal('edit-profile-modal');
             await loadData();
             if (state.viewingProfileUser === state.currentUser) await fetchProfileData(state.currentUser);
-        } catch(err) { alert(err.message || "Error saving"); }
-        btn.innerText = "SAVE CHANGES";
+        } catch(err) { showToast(err.message || "Error saving", "error"); }
+        setButtonLoading('save-profile-btn', false, "SAVE CHANGES");
     }
 
     /* --- FOLLOW (OPTIMISTIC) --- */
@@ -877,12 +1764,21 @@
         } catch(e) { btn.innerText = "ERROR"; }
     }
 
+    async function toggleFan() {
+        const target = state.viewingProfileUser;
+        if(!target || target === state.currentUser) return;
+        try {
+            await apiRequest('/api/interact', { method: 'POST', body: { action: 'become_fan', target_username: target } });
+            fetchProfileData(target);
+        } catch {}
+    }
+
     /* --- USER LISTS --- */
     async function openUserList(type) {
         const target = state.viewingProfileUser || state.currentUser;
         document.getElementById('user-list-title').innerText = type.toUpperCase();
         const list = document.getElementById('user-list-content');
-        list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">Loading...</p>';
+        list.innerHTML = skeleton(3);
         openModal('user-list-modal');
 
         const action = type === 'followers' ? 'get_followers' : 'get_following';
@@ -926,7 +1822,7 @@
                 body: { action: 'save', id: vId }
             });
         } catch(err) {
-            alert(err.message || "Could not save");
+            showToast(err.message || "Could not save", "error");
         }
     }
 
@@ -949,9 +1845,41 @@
     }
 
     /* --- PLAYBACK --- */
+    let pullStartY = 0;
+    let isPulling = false;
+
+    function initPullToRefresh() {
+        const container = document.getElementById('feed-container');
+        container.addEventListener('touchstart', (e) => { pullStartY = e.touches[0].clientY; isPulling = false; }, { passive: true });
+        container.addEventListener('touchmove', (e) => {
+            if (state.currentView !== 'home' || state.currentIndex !== 0) return;
+            const dy = e.touches[0].clientY - pullStartY;
+            if (dy > 60 && document.querySelector('#active-card')?.style.transform === '') {
+                e.preventDefault();
+                isPulling = true;
+                const indicator = document.querySelector('.pull-indicator') || (() => { const el = document.createElement('div'); el.className = 'pull-indicator'; el.textContent = 'REFRESH'; document.getElementById('feed-container').appendChild(el); return el; })();
+                indicator.style.opacity = Math.min((dy - 60) / 80, 1);
+                document.querySelector('#active-card').style.transform = `translateY(${Math.min(dy * 0.3, 80)}px)`;
+            }
+        }, { passive: false });
+        container.addEventListener('touchend', async () => {
+            if (!isPulling) return;
+            isPulling = false;
+            const card = document.querySelector('#active-card');
+            if (card) card.style.transform = '';
+            const indicator = document.querySelector('.pull-indicator');
+            if (indicator) indicator.style.opacity = '0';
+            // Refresh
+            haptic(20);
+            await loadData();
+        }, { passive: true });
+    }
+
     function renderFeed() {
         const container = document.getElementById('feed-container');
         const emptyMsg = document.getElementById('no-videos-msg');
+        // Clean up pre-buffer
+        if (state._prebufferEl) { state._prebufferEl.remove(); state._prebufferEl = null; }
         container.innerHTML = '';
         
         if (state.displayFeed.length === 0) { 
@@ -972,6 +1900,12 @@
         const isSaved = state.saved.includes(vidId) ? 'fas text-yellow-400 saved' : 'far text-white';
         const isLiked = data.has_liked ? 'liked text-red-600' : 'text-white';
         const tagsHtml = data.tags ? data.tags.map(t => `<span onclick='event.stopPropagation(); openExploreTag(${jsString(t)})' class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-white/40 transition">#${escapeHtml(t)}</span>`).join('') : '';
+        const mentionsHtml = Array.isArray(data.mentions) && data.mentions.length ? data.mentions.map(m => `<span onclick='event.stopPropagation(); openUserProfile(${jsString(m)})' class="text-blue-400 text-[10px] font-bold cursor-pointer hover:text-blue-300 transition">@${escapeHtml(m)}</span>`).join(' ') : '';
+        const collabHtml = Array.isArray(data.collaborators) && data.collaborators.length ? `<p class="text-[10px] mt-1">${data.collaborators.map(c => `<span onclick='event.stopPropagation(); openUserProfile(${jsString(c)})' class="text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition">@${escapeHtml(c)}</span>`).join(' ')}</p>` : '';
+        const songTitleHtml = data.song_title ? `<p class="text-white text-sm font-black drop-shadow-md">${escapeHtml(data.song_title)}</p>` : '';
+        const producerHtml = data.producer ? `<span onclick='event.stopPropagation(); openExploreTag(${jsString(data.producer)})' class="text-gray-300 text-[10px] font-bold drop-shadow-md cursor-pointer hover:text-white">prod. ${escapeHtml(data.producer)}</span>` : '';
+        const soundChipHtml = data.original_sound_id ? `<span onclick='event.stopPropagation(); openSoundVideos(${jsString(data.original_sound_id)})' class="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold text-gray-300 cursor-pointer hover:bg-white/30 transition mt-1 inline-block"><i class="fas fa-music text-[8px] mr-1"></i>Original Sound</span>` : '';
+        const lyricsHtml = data.lyrics ? `<div id="lyrics-overlay" class="absolute top-0 left-0 w-full h-full z-45 bg-black/80 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300"><pre class="text-white text-sm font-bold text-center leading-relaxed px-6 max-h-[70%] overflow-y-auto whitespace-pre-wrap pointer-events-auto" style="font-family:inherit">${escapeHtml(data.lyrics)}</pre></div>` : '';
 
         // --- NEW: CHECK IF USER OWNS VIDEO ---
         let deleteBtnHTML = '';
@@ -990,45 +1924,236 @@
         el.id = 'active-card';
         el.innerHTML = `
             <video playsinline loop class="w-full h-full object-cover" src="${sanitizeUrl(data.video)}"></video>
-            <div id="mute-btn" onclick="toggleMute(event)" class="absolute top-24 right-4 z-50 bg-black/40 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 pointer-events-auto cursor-pointer"><i class="fas fa-volume-up text-white text-sm"></i></div>
             <div class="gesture-layer"></div><div class="overlay-gradient"></div>
             <div class="center-play-icon"><i class="fas fa-play"></i></div><div class="stamp stamp-fire">FIRE</div><div class="stamp stamp-trash">TRASH</div>
+            ${data.visibility === 'vault' ? '<div class="absolute top-4 right-4 z-30 bg-amber-600/80 px-2 py-0.5 rounded text-[9px] font-bold text-white backdrop-blur-sm"><i class="fas fa-lock"></i> VAULT</div>' : ''}
+            <div class="watermark"><i class="fas fa-microphone"></i>RapR @${escapeHtml(data.username)}</div>
+            <div class="seek-flash" id="seek-flash"></div>
+            <div class="player-controls-overlay">
+                <div class="progress-track" id="progress-track"><div class="progress-waveform" id="progress-waveform"></div><div class="progress-fill" id="progress-fill"><div class="progress-thumb"></div></div></div>
+                <div class="player-time-row">
+                    <span class="player-time" id="player-time">0:00 / 0:00</span>
+                    <div class="volume-control" id="volume-control">
+                        <i id="volume-icon" class="fas fa-volume-up text-white text-sm" style="text-shadow:0 1px 4px rgba(0,0,0,0.8);cursor:pointer"></i>
+                        <div class="volume-slider" id="volume-slider"><div class="volume-slider-fill" id="volume-fill"></div></div>
+                    </div>
+                </div>
+            </div>
             <div class="interaction-column">
                 <div class="action-btn" onclick='openUserProfile(${jsString(data.username)})'><div class="w-12 h-12 rounded-full border-2 border-white mb-4 overflow-hidden shadow-lg"><img src="${authorAvatar}" class="w-full h-full object-cover"></div></div>
                 <div class="action-btn" onclick="likeVideo(${state.currentIndex})"><div class="action-icon-bg"><i class="fas fa-heart text-2xl ${isLiked}" id="like-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md" id="like-count">${data.likes}</span></div>
                 <div class="action-btn" onclick='openComments(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-comment-dots text-white text-xl"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">${data.comments_count || 0}</span></div>
                 <div class="action-btn" onclick='toggleSave(${jsString(vidId)}, this)'><div class="action-icon-bg"><i class="${isSaved} fa-bookmark text-xl transition-all duration-200" id="save-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Save</span></div>
+                <div class="action-btn" onclick='requestFeedback(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-message text-white text-lg"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Rate</span></div>
+                ${data.lyrics ? `<div class="action-btn" onclick='toggleLyrics(event)'><div class="action-icon-bg"><i class="fas fa-align-left text-white text-lg"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Lyrics</span></div>` : ''}
                 <div class="action-btn" onclick='shareVideo(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-share text-white text-xl"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Share</span></div>
+                ${data.username === state.currentUser ? `<div class="action-btn" onclick='showVideoAnalytics(${jsString(vidId)})'><div class="action-icon-bg" style="background:rgba(59,130,246,0.2);border-color:rgba(59,130,246,0.3)"><i class="fas fa-chart-simple text-blue-400 text-lg"></i></div><span class="text-[10px] font-bold text-blue-400 drop-shadow-md">Stats</span></div>` : ''}
+                <div class="action-btn"><div class="action-icon-bg"><i class="fas fa-eye text-white text-lg"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md" id="views-count">${data.views_count || 0}</span></div>
                 ${deleteBtnHTML}
             </div>
+            ${lyricsHtml}
             <div class="absolute bottom-24 left-5 max-w-[70%] pointer-events-none text-shadow-md z-30">
+                ${songTitleHtml}
+                ${producerHtml}
+                ${soundChipHtml ? `<div class="pointer-events-auto">${soundChipHtml}</div>` : ''}
                 <h2 onclick='openUserProfile(${jsString(data.username)})' class="text-xl font-black mb-1 drop-shadow-lg text-white tracking-tight flex items-center cursor-pointer hover:text-gray-200 transition pointer-events-auto">@${escapeHtml(data.username)} ${VERIFIED_SVG}</h2>
                 <p class="text-gray-200 text-xs font-bold leading-relaxed drop-shadow-md opacity-90 mb-2">${escapeHtml(data.bio || '')}</p>
+                ${mentionsHtml ? `<p class="text-[10px] mb-1">${mentionsHtml}</p>` : ''}
+                ${collabHtml}
                 <div class="flex gap-2 flex-wrap pointer-events-auto">${tagsHtml}</div>
             </div>`;
         container.appendChild(el);
+        el.classList.add('entering');
+        setTimeout(() => el.classList.remove('entering'), 400);
         initHammer(el);
         const vid = el.querySelector('video');
-        vid.muted = state.isGlobalMuted; updateMuteIcon(state.isGlobalMuted);
         
         // Auto-play logic
         const playPromise = vid.play();
         if (playPromise !== undefined) {
             playPromise.catch(() => {
-                // Auto-play prevented
                 vid.muted = true; 
                 state.isGlobalMuted = true; 
-                updateMuteIcon(true); 
+                updateVolumeIcon(0, true); 
                 vid.play(); 
             });
         }
+
+        // Setup player controls
+        setupPlayer(vid);
+
+        // Pre-buffer next video
+        const nextIdx = (state.currentIndex + 1) % state.displayFeed.length;
+        if (nextIdx !== state.currentIndex && !state._prebufferEl) {
+            const nextData = state.displayFeed[nextIdx];
+            if (nextData) {
+                const pb = document.createElement('video');
+                pb.preload = 'auto';
+                pb.muted = true;
+                pb.playsInline = true;
+                pb.style.display = 'none';
+                pb.src = sanitizeUrl(nextData.video);
+                pb.load();
+                state._prebufferEl = pb;
+                document.body.appendChild(pb);
+            }
+        }
+
+        // Update OG meta tags for this video
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        const ogImg = document.querySelector('meta[property="og:image"]');
+        const twTitle = document.querySelector('meta[name="twitter:title"]');
+        const twDesc = document.querySelector('meta[name="twitter:description"]');
+        const shareUrl = `${window.location.origin}${window.location.pathname}?video=${vidId}`;
+        if (ogTitle) ogTitle.setAttribute('content', `@${data.username} on RapR`);
+        if (ogDesc) ogDesc.setAttribute('content', data.bio || 'New drop on RapR');
+        if (ogUrl) ogUrl.setAttribute('content', shareUrl);
+        if (ogImg) ogImg.setAttribute('content', authorAvatar);
+        if (twTitle) twTitle.setAttribute('content', `@${data.username} on RapR`);
+        if (twDesc) twDesc.setAttribute('content', data.bio || 'New drop on RapR');
+
+        // Track view
+        apiRequest('/api/interact', {
+            method: 'POST',
+            body: { action: 'view', id: vidId }
+        }).catch(() => {});
     }
 
-    function toggleMute(e) { e.stopPropagation(); const vid = document.querySelector('#active-card video'); if(vid) { vid.muted = !vid.muted; state.isGlobalMuted = vid.muted; updateMuteIcon(vid.muted); } }
-    function updateMuteIcon(muted) { const i = document.querySelector('#mute-btn i'); if(i) i.className = muted ? 'fas fa-volume-mute text-white text-sm' : 'fas fa-volume-up text-white text-sm'; }
+    function initWaveform() {
+        const container = document.getElementById('progress-waveform');
+        if (!container || container.children.length) return;
+        for (let i = 0; i < 60; i++) {
+            const bar = document.createElement('span');
+            bar.style.height = `${2 + Math.sin(i * 0.5) * 6 + Math.random() * 4}px`;
+            container.appendChild(bar);
+        }
+    }
+
+    function setupPlayer(vid) {
+        initWaveform();
+        vid.removeAttribute('loop');
+        state.playerVolume = state.playerVolume !== undefined ? state.playerVolume : 0.8;
+        vid.volume = state.playerVolume;
+        vid.muted = state.isGlobalMuted;
+        updateVolumeIcon(state.isGlobalMuted ? 0 : state.playerVolume, state.isGlobalMuted);
+        const fill = document.getElementById('progress-fill');
+        const track = document.getElementById('progress-track');
+        const timeEl = document.getElementById('player-time');
+        const seekFlash = document.getElementById('seek-flash');
+        const volSlider = document.getElementById('volume-slider');
+        const volFill = document.getElementById('volume-fill');
+        const volIcon = document.getElementById('volume-icon');
+
+        if (volFill) volFill.style.width = `${state.playerVolume * 100}%`;
+        if (volIcon) updateVolumeIcon(state.playerVolume, false);
+
+        let seeking = false;
+
+        function formatTime(s) {
+            if (!s || !isFinite(s)) return '0:00';
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function updateTime() {
+            if (!seeking && fill && timeEl) {
+                const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
+                fill.style.width = `${pct}%`;
+                timeEl.textContent = `${formatTime(vid.currentTime)} / ${formatTime(vid.duration)}`;
+            }
+        }
+
+        vid.addEventListener('timeupdate', updateTime);
+
+        vid.addEventListener('loadedmetadata', () => {
+            if (timeEl) timeEl.textContent = `0:00 / ${formatTime(vid.duration)}`;
+        });
+
+        function seekClient(clientX) {
+            const rect = track.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            vid.currentTime = ratio * vid.duration;
+            if (fill) fill.style.width = `${ratio * 100}%`;
+        }
+
+        function onMouseMove(e) { if (seeking) seekClient(e.clientX); }
+        function onMouseUp() { seeking = false; }
+        if (track) {
+            track.addEventListener('mousedown', (e) => { seeking = true; seekClient(e.clientX); document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); });
+            track.addEventListener('touchstart', (e) => { seeking = true; seekClient(e.touches[0].clientX); }, { passive: true });
+            track.addEventListener('touchmove', (e) => { if (seeking) seekClient(e.touches[0].clientX); }, { passive: true });
+            track.addEventListener('touchend', () => { seeking = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); });
+        }
+
+        // Volume slider
+        if (volSlider) {
+            function setVol(clientX) {
+                const rect = volSlider.getBoundingClientRect();
+                const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                vid.volume = v;
+                state.playerVolume = v;
+                if (volFill) volFill.style.width = `${v * 100}%`;
+                updateVolumeIcon(v, vid.muted);
+                if (v > 0 && vid.muted) { vid.muted = false; }
+            }
+            volSlider.addEventListener('mousedown', (e) => { setVol(e.clientX); });
+            volSlider.addEventListener('touchstart', (e) => { setVol(e.touches[0].clientX); }, { passive: true });
+        }
+
+        if (volIcon) {
+            volIcon.addEventListener('click', () => {
+                vid.muted = !vid.muted;
+                updateVolumeIcon(vid.muted ? 0 : state.playerVolume, vid.muted);
+            });
+            volIcon.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                vid.muted = !vid.muted;
+                updateVolumeIcon(vid.muted ? 0 : state.playerVolume, vid.muted);
+            });
+        }
+
+        function flashSeek(text) {
+            if (!seekFlash) return;
+            seekFlash.textContent = text;
+            seekFlash.classList.add('show');
+            clearTimeout(seekFlash._timeout);
+            seekFlash._timeout = setTimeout(() => seekFlash.classList.remove('show'), 400);
+        }
+
+        state._seekFlash = flashSeek;
+    }
+
+    function updateVolumeIcon(vol, muted) {
+        const i = document.getElementById('volume-icon');
+        if (!i) return;
+        if (muted || vol === 0) i.className = 'fas fa-volume-mute text-white text-sm';
+        else if (vol < 0.3) i.className = 'fas fa-volume-off text-white text-sm';
+        else if (vol < 0.7) i.className = 'fas fa-volume-down text-white text-sm';
+        else i.className = 'fas fa-volume-up text-white text-sm';
+        i.style.textShadow = '0 1px 4px rgba(0,0,0,0.8)';
+    }
     
     function initHammer(el) {
-        const mc = new Hammer(el.querySelector('.gesture-layer')); mc.get('pan').set({ direction: Hammer.DIRECTION_ALL }); mc.on("tap", togglePlay);
+        const mc = new Hammer(el.querySelector('.gesture-layer')); mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+        mc.on("tap", (ev) => {
+            const vid = document.querySelector('#active-card video');
+            if (!vid) return;
+            if (handleDoubleTap(ev)) return;
+            const rect = el.getBoundingClientRect();
+            const xRatio = (ev.center.x - rect.left) / rect.width;
+            if (xRatio < 0.3) {
+                vid.currentTime = Math.max(0, vid.currentTime - 10);
+                if (state._seekFlash) state._seekFlash('-10s');
+            } else if (xRatio > 0.7) {
+                vid.currentTime = Math.min(vid.duration, vid.currentTime + 10);
+                if (state._seekFlash) state._seekFlash('+10s');
+            } else {
+                togglePlay();
+            }
+        });
         mc.on("pan", (ev) => {
             if(Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) {
                 el.style.transform = `translate(${ev.deltaX}px, ${ev.deltaY}px) rotate(${ev.deltaX*0.05}deg)`;
@@ -1037,23 +2162,115 @@
             } else { el.style.transform = `translate(0px, ${ev.deltaY}px)`; el.querySelector('.stamp-fire').style.opacity=0; el.querySelector('.stamp-trash').style.opacity=0; }
         });
         mc.on("panend", (ev) => {
-            if(Math.abs(ev.deltaX) > 80) { if(ev.deltaX>0) likeVideo(state.currentIndex); animateExit(el, ev.deltaX>0?'right':'left'); }
-            else if(Math.abs(ev.deltaY) > 80) animateExit(el, ev.deltaY>0?'down':'up');
-            else { el.style.transform = ''; el.querySelector('.stamp-fire').style.opacity=0; el.querySelector('.stamp-trash').style.opacity=0; }
+            if(Math.abs(ev.deltaX) > 80) {
+                haptic(15);
+                const stamp = ev.deltaX > 0 ? el.querySelector('.stamp-fire') : el.querySelector('.stamp-trash');
+                if (stamp) { stamp.style.opacity = '1'; stamp.classList.add('stamp-slam'); }
+                if (ev.deltaX > 0) { likeVideo(state.currentIndex); heartBurst(ev.center?.x, ev.center?.y, 5); }
+                animateExit(el, ev.deltaX>0?'right':'left');
+            }
+            else if(Math.abs(ev.deltaY) > 80) { haptic(10); animateExit(el, ev.deltaY>0?'down':'up'); }
+            else { el.style.transform = ''; el.querySelector('.stamp-fire').style.opacity=0; el.querySelector('.stamp-trash').style.opacity=0; el.querySelector('.stamp-fire')?.classList.remove('stamp-slam'); el.querySelector('.stamp-trash')?.classList.remove('stamp-slam'); }
         });
     }
+    function haptic(ms = 10) { if (navigator.vibrate) navigator.vibrate(ms); }
+
+    function heartBurst(x, y, count = 8) {
+        const icons = ['fas fa-heart', 'fas fa-microphone', 'fas fa-star', 'fas fa-fire'];
+        for (let i = 0; i < count; i++) {
+            const el = document.createElement('i');
+            el.className = icons[i % icons.length] + ' like-particle';
+            const angle = (i / count) * Math.PI * 2;
+            const dist = 60 + Math.random() * 40;
+            el.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+            el.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+            el.style.left = (x || window.innerWidth / 2) + 'px';
+            el.style.top = (y || window.innerHeight / 2) + 'px';
+            el.style.color = ['#ef4444', '#f59e0b', '#22c55e', '#ef4444'][i % 4];
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+    }
+
+    let lastTapTime = 0;
+    function handleDoubleTap(ev) {
+        const now = Date.now();
+        if (now - lastTapTime < 350) {
+            likeVideo(state.currentIndex);
+            heartBurst(ev.center?.x, ev.center?.y);
+            lastTapTime = 0;
+            return true;
+        }
+        lastTapTime = now;
+        return false;
+    }
+
+    function screenFlash() {
+        const el = document.createElement('div');
+        el.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(239,68,68,0.15);pointer-events:none;z-index:9998;animation:screenFlash 0.2s ease-out forwards';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 250);
+    }
+
+    function relativeTime(ts) {
+        if (!ts) return '';
+        const now = Date.now();
+        const t = typeof ts === 'number' ? ts : new Date(ts).getTime();
+        if (!t) return '';
+        const diff = Math.floor((now - t) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        if (diff < 2592000) return `${Math.floor(diff / 604800)}w ago`;
+        const d = new Date(t);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
     function togglePlay() { const vid = document.querySelector('#active-card video'); if(vid.paused) { vid.play(); document.getElementById('active-card').classList.remove('paused'); } else { vid.pause(); document.getElementById('active-card').classList.add('paused'); } }
+
+    function toggleLyrics(e) { e.stopPropagation(); const overlay = document.getElementById('lyrics-overlay'); if (overlay) { const isOpen = overlay.style.opacity === '1'; overlay.style.opacity = isOpen ? '0' : '1'; overlay.style.pointerEvents = isOpen ? 'none' : 'auto'; } }
+
+    let soundVideoCache = [];
+    function openSoundVideos(soundId) { openSheet('sound-sheet'); document.getElementById('sound-videos-list').innerHTML = skeleton(3); (async () => { const vids = await apiRequest('/api/interact?action=get_sound_videos&sound_id=' + encodeURIComponent(soundId)); soundVideoCache = vids; const list = document.getElementById('sound-videos-list'); list.innerHTML = ''; if (!vids.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-4">No videos using this sound.</p>'; return; } vids.forEach((v, i) => { list.innerHTML += `<div class="explore-item" onclick="closeSheet('sound-sheet'); playSpecificSoundVideo(${i})"><video src="${sanitizeUrl(v.video)}" muted></video><div class="explore-overlay"><p class="text-[10px] font-bold">@${escapeHtml(v.username)}</p></div></div>`; }); })(); }
+
+    function playSpecificSoundVideo(idx) {
+        if (soundVideoCache[idx]) {
+            state.displayFeed = soundVideoCache.map(v => ({ ...v, id: String(v.id || v.video || ''), tags: v.tags || ['rap'], likes: Number(v.likes || 0), verified: true, comments: v.comments || [], comments_count: Number(v.comments_count || 0), username: v.username || 'Unknown', video: sanitizeUrl(v.video || '') }));
+            state.currentIndex = idx;
+            soundVideoCache = [];
+            switchView('home');
+            renderFeed();
+        }
+    }
     function animateExit(el, dir) {
-        el.style.transition = 'transform 0.3s ease-out';
+        el.style.transition = 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)';
         if(dir=='right') el.style.transform = `translate(${window.innerWidth}px, 50px) rotate(20deg)`;
         if(dir=='left') el.style.transform = `translate(-${window.innerWidth}px, 50px) rotate(-20deg)`;
-        if(dir=='up') el.style.transform = `translateY(-100%)`; if(dir=='down') el.style.transform = `translateY(100%)`;
+        if(dir=='up') { el.style.transform = 'translateY(-100%) scale(0.95)'; el.style.opacity = '0'; }
+        if(dir=='down') { el.style.transform = 'translateY(100%) scale(0.95)'; el.style.opacity = '0'; }
         setTimeout(() => { 
             if(dir=='down') state.currentIndex = (state.currentIndex - 1 + state.displayFeed.length) % state.displayFeed.length; 
             else state.currentIndex = (state.currentIndex + 1) % state.displayFeed.length; 
             renderFeed(); 
-        }, 300);
+        }, 350);
     }
+    async function showVideoAnalytics(vidId) {
+        try {
+            const data = await apiRequest(`/api/video/analytics?id=${encodeURIComponent(vidId)}`);
+            const days = Object.keys(data.viewsOverTime || {}).slice(-7);
+            const maxVal = Math.max(...Object.values(data.viewsOverTime || {}), 1);
+            const chartHtml = days.map((d) => {
+                const h = ((data.viewsOverTime[d] || 0) / maxVal) * 60;
+                return `<div class="flex flex-col items-center gap-1"><div class="w-5 bg-red-500 rounded-sm" style="height:${Math.max(h, 2)}px"></div><span class="text-[7px] text-zinc-500">${d.slice(5)}</span></div>`;
+            }).join('');
+            showToast(
+                `Views: ${data.viewCount} | Likes: ${data.likeCount} | Saves: ${data.saveCount} | Comments: ${data.commentCount}\n${chartHtml}`,
+                'info', 5000
+            );
+        } catch {}
+    }
+
     async function likeVideo(idx) {
         const vid = state.displayFeed[idx]; if(vid.has_liked) return; vid.likes++; vid.has_liked = true;
         document.getElementById('like-count').innerText = vid.likes; document.getElementById('like-icon').classList.add('text-red-600', 'liked');
@@ -1066,20 +2283,23 @@
             vid.likes--;
             vid.has_liked = false;
             renderFeed();
-            alert(err.message || "Could not like video");
+            showToast(err.message || "Could not like video", "error");
         }
     }
 
     let currentVideoIdForComments = null;
     async function openComments(vidId) {
-        currentVideoIdForComments = vidId; openSheet('comments-sheet'); const list = document.getElementById('comments-list'); list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">Loading...</p>';
+        currentVideoIdForComments = vidId; openSheet('comments-sheet'); const list = document.getElementById('comments-list'); list.innerHTML = skeleton(3);
         const comments = await apiRequest(`/api/interact?action=get_comments&video_id=${encodeURIComponent(vidId)}`); list.innerHTML = '';
         if(comments.length===0) list.innerHTML = '<p class="text-zinc-500 text-center text-xs mt-4">No comments yet.</p>';
         comments.filter(c=>!c.parent_id).forEach(c => { list.innerHTML+=renderCommentHTML(c, false); comments.filter(r=>r.parent_id===c.id).forEach(r=>list.innerHTML+=renderCommentHTML(r,true)); });
     }
     function renderCommentHTML(c, isReply) {
         const heartClass = c.has_liked ? 'fas text-red-500 comment-heart-active' : 'far text-zinc-500';
-        return `<div class="comment-item ${isReply?'comment-reply':''} flex gap-3"><div class="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0"><img src="${sanitizeUrl(c.avatar || 'https://ui-avatars.com/api/?name='+encodeURIComponent(c.username))}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between items-start"><p class="text-xs font-bold text-zinc-400">@${escapeHtml(c.username)}</p><div class="flex gap-3 text-[10px] text-zinc-500"><span onclick='likeComment(${jsString(c.id)}, this)' class="cursor-pointer flex items-center gap-1 group"><i class="${heartClass} transition-transform duration-200"></i> <span class="count">${c.likes}</span></span></div></div><p class="text-xs text-white mt-0.5">${escapeHtml(c.text)}</p><p onclick='prepareReply(${jsString(c.id)}, ${jsString(c.username)})' class="text-[9px] font-bold text-zinc-600 mt-1 cursor-pointer hover:text-white">REPLY</p></div></div>`;
+        const canDelete = c.username === state.currentUser;
+        const delBtn = canDelete ? `<span onclick='deleteComment(${jsString(c.id)})' class="cursor-pointer text-zinc-600 hover:text-red-500 ml-2"><i class="fas fa-trash text-[10px]"></i></span>` : '';
+        const timeAgo = relativeTime(c.created_at || c.timestamp);
+        return `<div class="comment-item ${isReply?'comment-reply':''} flex gap-3"><div class="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0"><img src="${sanitizeUrl(c.avatar || 'https://ui-avatars.com/api/?name='+encodeURIComponent(c.username))}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between items-start"><p class="text-xs font-bold text-zinc-400">@${escapeHtml(c.username)}</p><div class="flex items-center gap-2"><span class="text-[9px] text-zinc-600">${timeAgo}</span><div class="flex gap-3 text-[10px] text-zinc-500 items-center"><span onclick='likeComment(${jsString(c.id)}, this)' class="cursor-pointer flex items-center gap-1 group"><i class="${heartClass} transition-transform duration-200"></i> <span class="count">${c.likes}</span></span>${delBtn}</div></div></div><p class="text-xs text-white mt-0.5">${escapeHtml(c.text)}</p><p onclick='prepareReply(${jsString(c.id)}, ${jsString(c.username)})' class="text-[9px] font-bold text-zinc-600 mt-1 cursor-pointer hover:text-white">REPLY</p></div></div>`;
     }
     function prepareReply(id, user) { state.replyingToId = id; const ind = document.getElementById('replying-to-indicator'); ind.innerHTML = `Replying to @${escapeHtml(user)} <i class="fas fa-times cursor-pointer ml-1" onclick="cancelReply()"></i>`; ind.classList.remove('hidden'); document.getElementById('comment-input').focus(); }
     function cancelReply() { state.replyingToId = null; document.getElementById('replying-to-indicator').classList.add('hidden'); }
@@ -1097,6 +2317,20 @@
         });
         openComments(currentVideoIdForComments);
     }
+    async function deleteComment(cid) {
+        if (!confirm('Delete this comment?')) return;
+        try {
+            await apiRequest('/api/interact', {
+                method: 'POST',
+                body: { action: 'delete_comment', comment_id: cid }
+            });
+            showToast('Comment deleted', 'info');
+            if (currentVideoIdForComments) openComments(currentVideoIdForComments);
+        } catch (err) {
+            showToast(err.message || 'Could not delete comment', 'error');
+        }
+    }
+
     async function likeComment(cid, el) {
         const icon = el.querySelector('i'); 
         if(icon.classList.contains('comment-heart-active')) return;
@@ -1110,26 +2344,91 @@
     }
 
     // --- OTHER ---
-    function updateCharts() {
-        const list = document.getElementById('charts-list'); list.innerHTML = '';
-        let filtered = state.currentChartGenre === 'ALL CITY' ? state.feed : state.feed.filter(v => v.tags.some(t => t.includes(state.currentChartGenre.toLowerCase())));
-        if(filtered.length === 0) { list.innerHTML = `<p class="text-center text-gray-500 text-xs mt-10">No videos.</p>`; return; }
-        filtered.sort((a,b) => b.likes - a.likes).slice(0, 10).forEach((item, i) => {
-            list.innerHTML += `<div class="flex items-center py-4 border-b border-gray-900"><span class="w-8 text-2xl font-black italic ${i==0?'text-yellow-400':(i==1?'text-gray-300':'text-orange-400')}">#${i+1}</span><div class="flex-1 ml-4 cursor-pointer" onclick='openUserProfile(${jsString(item.username)})'><p class="font-bold text-sm hover:text-gray-300 transition">@${escapeHtml(item.username)} ${VERIFIED_SVG}</p><p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">${item.likes} LIKES</p></div></div>`;
+    let chartMode = 'daily';
+    function setChartMode(m) {
+        chartMode = m;
+        document.querySelectorAll('.chart-mode-pill').forEach((b) => {
+            b.classList.remove('active', 'bg-white', 'text-black', 'border-white');
+            if (b.id === 'chart-mode-' + m) b.classList.add('active', 'bg-white', 'text-black', 'border-white');
         });
+        updateCharts();
     }
+
+    async function updateCharts() {
+        const list = document.getElementById('charts-list'); list.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><div class="w-10 h-10 rounded-full bg-zinc-900 animate-pulse mb-3"></div><p class="text-zinc-600 text-xs font-bold">Loading...</p></div>';
+        try {
+            const data = await apiRequest(`/api/chart?mode=${chartMode}&genre=${encodeURIComponent(state.currentChartGenre)}`);
+            list.innerHTML = '';
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i class="fas fa-chart-bar text-4xl text-zinc-800 mb-4"></i><p class="text-zinc-600 text-xs font-bold">NO VIDEOS YET</p><p class="text-zinc-700 text-[10px] mt-2">Be the first to drop in this genre</p></div>';
+                return;
+            }
+            data.slice(0, 10).forEach((item, i) => {
+                list.innerHTML += `<div class="flex items-center py-4 px-3 my-1 rounded-xl transition hover:bg-zinc-900/50 cursor-pointer" onclick='openUserProfile(${jsString(item.username)})'><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${i===0?'text-yellow-400':(i===1?'text-zinc-300':'text-zinc-600')}">#${i+1}</div><div class="flex-1 ml-2"><p class="font-bold text-sm text-white">@${escapeHtml(item.username)}</p><p class="text-[10px] text-zinc-500 font-bold tracking-wider"><i class="fas fa-bolt text-zinc-700"></i> ${item.score} PT</p></div></div>`;
+            });
+        } catch { list.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i class="fas fa-exclamation-triangle text-4xl text-zinc-800 mb-4"></i><p class="text-zinc-600 text-xs font-bold">COULD NOT LOAD</p></div>'; }
+    }
+    let miniPlayerVideo = null;
+    function showMiniPlayer(data) {
+        const mp = document.getElementById('mini-player');
+        if (!mp) return;
+        mp.classList.remove('hidden');
+        document.getElementById('mini-player-title').textContent = data.song_title || data.bio || 'Now Playing';
+        document.getElementById('mini-player-user').textContent = '@' + data.username;
+    }
+    function hideMiniPlayer() {
+        const mp = document.getElementById('mini-player');
+        if (mp) mp.classList.add('hidden');
+    }
+    function toggleMiniPlay() {
+        const vid = document.querySelector('#active-card video');
+        if (!vid) return;
+        if (vid.paused) { vid.play(); document.querySelector('#mini-player-play-btn i').className = 'fas fa-pause'; }
+        else { vid.pause(); document.querySelector('#mini-player-play-btn i').className = 'fas fa-play'; }
+    }
+    function closeMiniPlayer() {
+        hideMiniPlayer();
+        const vid = document.querySelector('#active-card video');
+        if (vid) vid.pause();
+    }
+
     function switchView(view) {
         state.currentView = view;
         document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
         document.getElementById('view-'+view).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
         if(view!=='studio') document.getElementById('nav-'+view)?.classList.add('active');
+        if (view === 'explore') loadTrendingTags();
+        const currentData = state.displayFeed[state.currentIndex];
+        if (view !== 'home' && currentData) showMiniPlayer(currentData);
+        if (view === 'home') hideMiniPlayer();
         const topBar = document.getElementById('top-bar');
         const vid = document.querySelector('#active-card video');
-        if(view !== 'home') { if(vid) vid.pause(); } else { if(vid) vid.play().catch(() => {}); }
-        if(view==='home'||view==='charts') topBar.classList.remove('hidden'); else topBar.classList.add('hidden');
+        if(view !== 'home') { } else { if(vid) { const pp = vid.play(); if (pp) pp.catch(() => {}); } }
+        if(view==='home') { topBar.classList.remove('hidden'); screenFlash(); }
+        else if(view==='charts') topBar.classList.remove('hidden');
+        else topBar.classList.add('hidden');
     }
-    function openSheet(id) { document.getElementById(id).classList.add('open'); }
+    function openSheet(id) {
+        document.getElementById(id).classList.add('open');
+        // Attach swipe-down dismiss
+        const sheet = document.getElementById(id);
+        const handle = sheet.querySelector('.sheet-handle');
+        if (handle && !handle._swipeInit) {
+            handle._swipeInit = true;
+            let startY = 0;
+            handle.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+            handle.addEventListener('touchmove', (e) => {
+                const dy = e.touches[0].clientY - startY;
+                if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+            }, { passive: true });
+            handle.addEventListener('touchend', (e) => {
+                const dy = e.changedTouches[0].clientY - startY;
+                sheet.style.transform = '';
+                if (dy > 80) closeSheet(id);
+            }, { passive: true });
+        }
+    }
     function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
     function openModal(id) { document.getElementById(id).classList.add('open'); }
     function closeModal(id) { document.getElementById(id).classList.remove('open'); if(id === 'chat-modal' && state.chatPollInterval) { clearInterval(state.chatPollInterval); state.chatPollInterval = null; } }
@@ -1139,7 +2438,7 @@
     
     // --- MESSAGING ---
     async function openMessagesList() {
-        openModal('messages-modal'); const list = document.getElementById('inbox-list'); list.innerHTML = '<p class="text-center text-zinc-600 text-xs mt-4">Loading...</p>';
+        openModal('messages-modal'); const list = document.getElementById('inbox-list'); list.innerHTML = skeleton(4);
         const chats = await apiRequest('/api/interact?action=get_chats'); list.innerHTML = '';
         if(chats.length===0) list.innerHTML = '<p class="text-center text-zinc-600 text-xs mt-4">No messages yet.</p>';
         chats.forEach(c => { const other = c.sender === state.currentUser ? c.receiver : c.sender; list.innerHTML += `<div onclick='openChatWithUser(${jsString(other)})' class="flex gap-4 p-4 border-b border-zinc-900 cursor-pointer hover:bg-zinc-900 transition"><div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lg">${escapeHtml(other[0].toUpperCase())}</div><div><p class="font-bold text-sm">@${escapeHtml(other)}</p><p class="text-xs text-zinc-500 truncate w-48">${escapeHtml(c.last_msg)}</p></div></div>`; });
@@ -1163,20 +2462,54 @@
     }
     
     /* --- PUBLISHING --- */
+    function toggleSchedulePicker() {
+        document.getElementById('schedule-picker').classList.toggle('hidden');
+    }
+
+    async function savePostAsDraft() {
+        const bio = document.getElementById('post-caption').value.trim();
+        const tags = normalizeTagsInput(document.getElementById('post-tags').value);
+        const song_title = document.getElementById('post-song-title').value.trim();
+        const producer = document.getElementById('post-producer').value.trim();
+        const lyrics = document.getElementById('post-lyrics').value.trim();
+        if (!state.pendingEditVideo) return showToast('No video selected', 'error');
+        const scheduled = document.getElementById('schedule-toggle').checked;
+        const scheduledAt = scheduled ? new Date(document.getElementById('schedule-datetime').value).getTime() : 0;
+        const body = { bio, tags, song_title, producer, lyrics, filename: state.pendingEditVideo.filename || '' };
+        if (scheduledAt && scheduledAt > Date.now()) body.scheduled_at = scheduledAt;
+        try {
+            await apiRequest('/api/drafts/save', { method: 'POST', body });
+            showToast(scheduledAt ? 'Scheduled for later' : 'Saved to drafts', 'success');
+            closeModal('post-details-modal');
+            resetPendingVideo();
+        } catch (e) { showToast(e.message || 'Could not save draft', 'error'); }
+    }
+
     async function savePostDetails() {
         const txt = document.getElementById('post-caption').value;
         const tags = normalizeTagsInput(document.getElementById('post-tags').value);
+        const song_title = document.getElementById('post-song-title').value.trim();
+        const producer = document.getElementById('post-producer').value.trim();
+        const lyrics = document.getElementById('post-lyrics').value.trim();
         if(!state.pendingEditVideo) return;
         
         const fd = new FormData();
         fd.append('bio', txt);
         fd.append('tags', JSON.stringify(tags));
+        if (song_title) fd.append('song_title', song_title);
+        if (producer) fd.append('producer', producer);
+        if (lyrics) fd.append('lyrics', lyrics);
+        if (document.getElementById('vault-toggle')?.checked) fd.append('visibility', 'vault');
+        const collabInput = document.getElementById('post-collabs').value.trim();
+        if (collabInput) {
+            const collabs = collabInput.split(/\s+/).map((c) => c.replace(/^@/, '')).filter(Boolean);
+            if (collabs.length) fd.append('collaborators', JSON.stringify(collabs));
+        }
         if(state.pendingUploadFile) fd.append('video_file', state.pendingUploadFile, state.pendingUploadFile.name || 'rapr-upload.mp4');
         else if(state.pendingEditVideo.filename) fd.append('filename', state.pendingEditVideo.filename);
-        else return alert("Choose a video first");
+        else return showToast("Choose a video first", "error");
 
-        const btn = document.getElementById('publish-btn');
-        btn.innerText = "PUBLISHING...";
+        setButtonLoading('publish-btn', true, "PUBLISHING...");
         
         try {
             const d = await apiRequest('/api/finalize', { method: 'POST', body: fd });
@@ -1184,17 +2517,51 @@
             resetPendingVideo();
             document.getElementById('post-caption').value = '';
             document.getElementById('post-tags').value = '';
+            document.getElementById('post-song-title').value = '';
+            document.getElementById('post-producer').value = '';
+            document.getElementById('post-lyrics').value = '';
+            document.getElementById('post-collabs').value = '';
             await loadData();
             switchView('home');
             if(d.video && d.video.id) openUserProfileVideo(d.video.id);
         } catch(err) {
-            alert(err.message || "Error finalizing drop");
+            showToast(err.message || "Error finalizing drop", "error");
         }
-        btn.innerText = "PUBLISH VIDEO";
+        setButtonLoading('publish-btn', false, "PUBLISH VIDEO");
     }
 
     // --- NOTIFICATIONS ---
     function startNotificationPolling() { if(state.notificationPollInterval) clearInterval(state.notificationPollInterval); state.notificationPollInterval = setInterval(fetchNotifications, 10000); fetchNotifications(); }
+    async function initAdmin() {
+        try {
+            const resp = await fetch('/api/admin/reports', { headers: getAuthHeaders() });
+            if (resp.ok) document.getElementById('admin-section').classList.remove('hidden');
+        } catch {}
+    }
+
+    async function openAdminReports() {
+        const list = document.getElementById('admin-reports-list');
+        list.classList.toggle('hidden');
+        if (list.classList.contains('hidden')) return;
+        list.innerHTML = '<p class="text-zinc-600 text-xs text-center py-2">Loading...</p>';
+        try {
+            const reports = await apiRequest('/api/admin/reports');
+            list.innerHTML = '';
+            if (!reports.length) { list.innerHTML = '<p class="text-zinc-600 text-xs text-center py-2">No reports.</p>'; return; }
+            reports.forEach((r) => {
+                list.innerHTML += `<div class="p-2 bg-zinc-900 rounded text-[10px]"><span class="text-zinc-400">@${escapeHtml(r.reporter)}</span> reported <span class="text-white font-bold">${escapeHtml(r.reason)}</span>${r.video ? ` <button onclick="adminRemoveVideo('${escapeHtml(r.videoId)}')" class="text-red-500 ml-2">REMOVE</button>` : ''}</div>`;
+            });
+        } catch { list.innerHTML = '<p class="text-zinc-600 text-xs text-center py-2">Error.</p>'; }
+    }
+
+    async function adminRemoveVideo(id) {
+        try {
+            await apiRequest('/api/interact', { method: 'POST', body: { action: 'admin_remove_video', id } });
+            showToast('Video removed', 'success');
+            openAdminReports();
+        } catch {}
+    }
+
     async function fetchNotifications() {
         const data = await apiRequest('/api/interact?action=get_notifications');
         const unread = data.filter(n => n.is_read == 0).length;
@@ -1206,14 +2573,24 @@
             if(n.type==='like') { icon='fa-heart'; color='text-red-500'; text='liked your drop.'; }
             if(n.type==='comment') { icon='fa-comment'; color='text-blue-500'; text='commented on your drop.'; }
             if(n.type==='follow') { icon='fa-user-plus'; color='text-green-500'; text='started following you.'; }
-            list.innerHTML += `<div class="notif-item ${n.is_read==0?'unread':''}"><div class="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center ${color}"><i class="fas ${icon}"></i></div><div class="flex-1"><p class="text-xs text-white"><span class="font-bold">@${escapeHtml(n.actor_name || 'Unknown')}</span> ${escapeHtml(text)}</p></div></div>`;
+            if(n.type==='shoutout') { icon='fa-bullhorn'; color='text-yellow-500'; text='gave you a shoutout!'; }
+            if(n.type==='collab') { icon='fa-handshake'; color='text-cyan-400'; text='wants to collab!'; }
+            if(n.type==='mention') { icon='fa-at'; color='text-purple-400'; text='mentioned you in a drop.'; }
+            if(n.type==='beat_request') { icon='fa-drum'; color='text-amber-400'; text='wants to use your beat.'; }
+            if(n.type==='beat_approved') { icon='fa-check-circle'; color='text-green-400'; text='approved your beat request!'; }
+            if(n.type==='mentor_request') { icon='fa-graduation-cap'; color='text-purple-400'; text='wants you as a mentor.'; }
+            if(n.type==='verify' || n.type==='verification') { icon='fa-check'; color='text-green-400'; text='Your account was verified!'; }
+            if(n.type==='comment_like') { icon='fa-heart'; color='text-pink-400'; text='liked your comment.'; }
+            if(n.type==='message') { icon='fa-paper-plane'; color='text-blue-400'; text='sent you a message.'; }
+            list.innerHTML += `<div class="notif-item ${n.is_read==0?'unread':''}"><div class="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center ${color}"><i class="fas ${icon}"></i></div><div class="flex-1"><p class="text-xs text-white"><span class="font-bold">@${escapeHtml(n.actor_name || 'Unknown')}</span> ${escapeHtml(text)}</p><p class="text-[9px] text-zinc-600 mt-0.5">${relativeTime(n.created_at)}</p></div></div>`;
         });
     }
 
     // --- SEARCH ---
     async function handleSearch() {
         const query = document.getElementById('search-input').value.toLowerCase().trim();
-        let filteredVideos = !query ? getGenreFilteredFeed(state.feed) : getGenreFilteredFeed(state.feed).filter(v => (v.tags && v.tags.some(t => t.toLowerCase().includes(query))) || v.username.toLowerCase().includes(query));
+        const searchSource = [...state.feed, ...state.recommendedFeed].filter((v, i, a) => a.findIndex((x) => x.id === v.id) === i);
+        let filteredVideos = !query ? getGenreFilteredFeed(state.feed) : getGenreFilteredFeed(searchSource).filter(v => (v.tags && v.tags.some(t => t.toLowerCase().includes(query))) || v.username.toLowerCase().includes(query));
         renderExploreGrid(filteredVideos);
 
         const userResults = document.getElementById('explore-results-users');
@@ -1230,10 +2607,18 @@
         } else userResults.classList.add('hidden');
     }
 
+    async function loadTrendingTags() {
+        const container = document.getElementById('trending-tags');
+        try {
+            const tags = await apiRequest('/api/feed/trending?limit=10');
+            container.innerHTML = tags.map((t) => `<span onclick="openExploreTag('${escapeHtml(t.tag)}')" class="tag-pill whitespace-nowrap flex-shrink-0">#${escapeHtml(t.tag)} <span class="text-zinc-600 ml-1">${t.count}</span>${t.count > 5 ? ' <i class="fas fa-fire text-orange-400 text-[8px]"></i>' : ''}</span>`).join('');
+        } catch { container.innerHTML = ''; }
+    }
+
     function renderExploreGrid(data = null) {
         const grid = document.getElementById('explore-grid');
         grid.innerHTML = '';
-        const dataSource = data || getGenreFilteredFeed(state.feed);
+        const dataSource = data || getGenreFilteredFeed();
         state.currentGridFeed = dataSource; 
         if(dataSource.length === 0) { grid.innerHTML = '<p class="text-gray-500 text-xs col-span-2 text-center mt-10">No videos found.</p>'; return; }
         dataSource.forEach((item, i) => {
@@ -1249,6 +2634,43 @@
     }
 
     function toggleRecordState() { document.getElementById('studio-video-input').click(); }
+
+    async function loadDrafts() {
+        const container = document.getElementById('drafts-list');
+        container.classList.remove('hidden');
+        container.innerHTML = '<div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-zinc-400 tracking-widest">YOUR DRAFTS</span><i class="fas fa-times text-zinc-500 cursor-pointer text-xs" onclick="this.closest(\'#drafts-list\').classList.add(\'hidden\')"></i></div><p class="text-zinc-600 text-xs text-center py-4">Loading...</p>';
+        try {
+            const drafts = await apiRequest('/api/drafts');
+            container.innerHTML = '<div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-zinc-400 tracking-widest">YOUR DRAFTS</span><i class="fas fa-times text-zinc-500 cursor-pointer text-xs" onclick="document.getElementById(\'drafts-list\').classList.add(\'hidden\')"></i></div>';
+            if (!drafts.length) { container.innerHTML += '<p class="text-zinc-600 text-xs text-center py-4">No drafts yet.</p>'; return; }
+            drafts.forEach((d) => {
+                const isScheduled = d.scheduled_at && d.scheduled_at > Date.now();
+                const scheduledLabel = isScheduled ? `<span class="text-[9px] text-cyan-400 ml-2"><i class="fas fa-clock"></i> ${Math.round((d.scheduled_at - Date.now()) / 3600000)}h</span>` : '';
+                container.innerHTML += `<div class="flex items-center justify-between py-2 border-b border-zinc-900 ${isScheduled ? 'opacity-70' : ''}"><div class="flex-1"><p class="text-xs font-bold text-white">${escapeHtml(d.bio || 'Untitled')}${scheduledLabel}</p><p class="text-[9px] text-zinc-500">${d.song_title || 'No title'} ${d.tags?.length ? '#' + d.tags.join(' #') : ''}</p></div>${isScheduled ? '' : `<button onclick="publishDraft(${jsString(d.id)})" class="text-[9px] font-bold text-red-500 bg-red-900/20 px-3 py-1 rounded">PUBLISH</button>`}<button onclick="deleteDraft(${jsString(d.id)})" class="text-[9px] text-zinc-600 ml-2"><i class="fas fa-trash"></i></button></div>`;
+            });
+        } catch { container.innerHTML = '<div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-zinc-400 tracking-widest">YOUR DRAFTS</span><i class="fas fa-times text-zinc-500 cursor-pointer text-xs" onclick="document.getElementById(\'drafts-list\').classList.add(\'hidden\')"></i></div><p class="text-zinc-600 text-xs text-center py-4">Could not load drafts.</p>'; }
+    }
+
+    async function deleteDraft(id) {
+        try { await fetch(`/api/drafts/${id}`, { method: 'DELETE', headers: getAuthHeaders() }); loadDrafts(); showToast('Draft deleted', 'info'); } catch {}
+    }
+
+    async function publishDraft(id) {
+        try {
+            const drafts = await apiRequest('/api/drafts');
+            const draft = drafts.find((d) => d.id === id);
+            if (!draft) return showToast('Draft not found', 'error');
+            const fd = new FormData();
+            fd.append('bio', draft.bio || 'New Drop');
+            fd.append('tags', JSON.stringify(draft.tags || ['rap']));
+            if (draft.song_title) fd.append('song_title', draft.song_title);
+            if (draft.producer) fd.append('producer', draft.producer);
+            if (draft.lyrics) fd.append('lyrics', draft.lyrics);
+            if (draft.filename) fd.append('filename', draft.filename);
+            const result = await apiRequest('/api/finalize', { method: 'POST', body: fd });
+            if (result.success) { showToast('Draft published!', 'success'); await deleteDraft(id); await loadData(); switchView('home'); }
+        } catch (e) { showToast(e.message || 'Publish failed', 'error'); }
+    }
     function handleStudioCapture(event) { const file = event.target.files?.[0]; if(!file) return; queuePendingVideo(file, URL.createObjectURL(file), file.name); openModal('post-details-modal'); }
     function handleImportFile(event) { const file = event.target.files?.[0]; if(!file) return; queuePendingVideo(file, URL.createObjectURL(file), file.name); closeModal('import-modal'); openModal('post-details-modal'); }
     async function handleImportSubmit(event) {
@@ -1256,16 +2678,16 @@
         const input = document.getElementById('import-url-input');
         const button = document.getElementById('import-submit-btn');
         const videoUrl = input.value.trim();
-        if(!videoUrl) return alert("Paste a direct video URL or choose a video file.");
-        button.innerText = "IMPORTING...";
+        if(!videoUrl) return showToast("Paste a direct video URL or choose a video file.", "error");
+        setButtonLoading('import-submit-btn', true, "IMPORTING...");
         try {
             const data = await apiRequest('/api/import', { method: 'POST', body: { videoUrl } });
             queuePendingVideo(null, data.video, data.filename);
             input.value = '';
             closeModal('import-modal');
             openModal('post-details-modal');
-        } catch(err) { alert(err.message || "Import failed"); }
-        button.innerText = "IMPORT FROM URL";
+        } catch(err) { showToast(err.message || "Import failed", "error"); }
+        setButtonLoading('import-submit-btn', false, "IMPORT FROM URL");
     }
     async function shareVideo(videoId) {
         const url = new URL(window.location.href);
@@ -1281,11 +2703,177 @@
         }
         try {
             await navigator.clipboard.writeText(shareUrl);
-            alert("Link copied.");
+            showToast("Link copied to clipboard", "success");
         } catch(err) {
             window.prompt('Copy this link', shareUrl);
         }
     }
+
+    /* --- BEATS & CHALLENGES --- */
+    async function loadBeats(genre) {
+        const list = document.getElementById('beats-list');
+        list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Loading...</p>';
+        document.querySelectorAll('#beats-modal .tag-pill').forEach((b) => b.classList.remove('active', 'bg-white', 'text-black', 'border-white'));
+        document.querySelectorAll('#beats-modal .tag-pill').forEach((b) => { if (b.textContent.trim().toLowerCase() === (genre || 'all')) b.classList.add('active', 'bg-white', 'text-black', 'border-white'); });
+        try {
+            const beats = await apiRequest('/api/beats?genre=' + encodeURIComponent(genre) + '&sort=newest');
+            list.innerHTML = '';
+            if (!beats.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">No beats yet. Upload one from the studio!</p>'; return; }
+            beats.forEach((b) => {
+                const canRequest = b.username !== state.currentUser;
+                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800"><div class="w-10 h-10 rounded-full bg-amber-900/30 flex items-center justify-center text-amber-500"><i class="fas fa-drum"></i></div><div class="flex-1"><p class="text-sm font-bold text-white">${escapeHtml(b.title || 'Untitled')}</p><p class="text-[10px] text-zinc-500">@${escapeHtml(b.username)} ${b.bpm ? '• ' + b.bpm + ' BPM' : ''} ${b.genre ? '• ' + b.genre : ''}</p></div>${canRequest ? `<button onclick="requestBeat('${b.id}')" class="text-[9px] font-bold text-amber-500 bg-amber-900/20 px-3 py-1.5 rounded">REQUEST</button>` : '<span class="text-[9px] text-zinc-600">YOURS</span>'}</div>`;
+            });
+        } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load beats.</p>'; }
+    }
+
+    async function requestBeat(beatId) {
+        const msg = prompt('Message to the producer (optional):');
+        try {
+            await apiRequest('/api/interact', { method: 'POST', body: { action: 'request_beat', beat_id: beatId, message: msg || '' } });
+            showToast('Request sent!', 'success');
+        } catch (e) { showToast(e.message || 'Request failed', 'error'); }
+    }
+
+    async function loadChallenges() {
+        const list = document.getElementById('challenge-list');
+        list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Loading...</p>';
+        try {
+            const challenges = await apiRequest('/api/interact?action=list_challenges');
+            list.innerHTML = '';
+            if (!challenges.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">No active challenges.</p>'; return; }
+            challenges.forEach((c) => {
+                const remaining = Math.max(0, Math.floor((c.deadline - Date.now()) / 86400000));
+                list.innerHTML += `<div class="p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800"><p class="text-sm font-bold text-white">${escapeHtml(c.title)}</p><p class="text-[10px] text-zinc-500 mt-1">#${escapeHtml(c.genre_tag)} • ${c.entry_count} entries • ${remaining > 0 ? remaining + 'd left' : 'Closed'}${c.prize ? ' • Prize: ' + escapeHtml(c.prize) : ''}</p></div>`;
+            });
+        } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load challenges.</p>'; }
+    }
+
+    /* --- BATTLES --- */
+    async function loadBattles(status) {
+        const list = document.getElementById('battle-list');
+        list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Loading...</p>';
+        document.querySelectorAll('#battle-modal .tag-pill').forEach((b) => b.classList.remove('active', 'bg-white', 'text-black', 'border-white'));
+        document.querySelectorAll('#battle-modal .tag-pill').forEach((b) => { if (b.textContent.trim().toLowerCase() === (status || 'all')) b.classList.add('active', 'bg-white', 'text-black', 'border-white'); });
+        try {
+            const battles = await apiRequest('/api/interact?action=list_battles' + (status ? '&status=' + status : ''));
+            list.innerHTML = '';
+            if (!battles.length) { list.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i class="fas fa-fire text-4xl text-zinc-800 mb-4"></i><p class="text-zinc-600 text-xs font-bold">NO BATTLES YET</p></div>'; return; }
+            battles.forEach((b) => {
+                const voteCount = b.votes?.length || 0;
+                const entryCount = b.entries?.length || 0;
+                list.innerHTML += `<div class="p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800"><div class="flex justify-between items-start"><div><p class="text-sm font-bold text-white">⚔️ @${escapeHtml(b.artist1_name)} vs @${escapeHtml(b.artist2_name)}</p><p class="text-[10px] text-zinc-500 mt-1">${entryCount}/2 entries • ${voteCount} votes • ${b.status.toUpperCase()}</p></div>${b.status === 'voting' ? `<button onclick="showToast('Voting: use the cast_vote action','info')" class="text-[9px] font-bold text-red-500 bg-red-900/20 px-3 py-1.5 rounded">VOTE</button>` : b.winner ? `<span class="text-[9px] font-bold text-green-500">🏆 @${escapeHtml(b.winner)}</span>` : ''}</div></div>`;
+            });
+        } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load battles.</p>'; }
+    }
+
+    /* --- FEEDBACK --- */
+    async function requestFeedback(videoId) {
+        const msg = prompt('What do you think of this drop? (1 thing that worked, 1 thing to improve):');
+        if (!msg) return;
+        try {
+            await apiRequest('/api/interact', { method: 'POST', body: { action: 'request_feedback', video_id: videoId } });
+            const parts = msg.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+            const feedbackList = await apiRequest('/api/interact?action=get_pending_feedback');
+            const fb = feedbackList[0];
+            if (fb) {
+                await apiRequest('/api/interact', { method: 'POST', body: { action: 'submit_feedback', feedback_id: fb.id, what_worked: parts[0] || msg, what_improve: parts[1] || '' } });
+                showToast('Feedback sent!', 'success');
+            } else { showToast('Feedback recorded', 'info'); }
+        } catch (e) { showToast(e.message || 'Could not submit feedback', 'error'); }
+    }
+
+    /* --- CONNECT --- */
+    async function loadConnects() {
+        const list = document.getElementById('connects-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Finding collaborators...</p>';
+        try {
+            const connects = await apiRequest('/api/interact?action=get_connects');
+            list.innerHTML = '';
+            if (!connects.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">No matches yet. Update your collab profile to get started.</p>'; return; }
+            connects.forEach((c) => {
+                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800 cursor-pointer hover:bg-zinc-800/50" onclick='openUserProfile(${jsString(c.username)})'><div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lg text-cyan-400">${escapeHtml(c.username[0].toUpperCase())}</div><div class="flex-1"><p class="text-sm font-bold text-white">@${escapeHtml(c.username)} <span class="text-[9px] text-zinc-500">${escapeHtml(c.role || '')}</span></p><p class="text-[10px] text-zinc-500">${c.genres ? '# ' + c.genres.join(' #') : ''} ${c.availability ? '• ' + c.availability : ''}</p></div><i class="fas fa-chevron-right text-zinc-600 text-xs"></i></div>`;
+            });
+        } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load connects.</p>'; }
+    }
+
+    /* --- LANDING PAGE ANIMATIONS --- */
+    function initLandingAnimations() {
+        // Parallax on phone mockup
+        const mockup = document.getElementById('hero-mockup');
+        if (mockup) {
+            document.getElementById('landing-page').addEventListener('scroll', () => {
+                const scrollY = document.getElementById('landing-page').scrollTop;
+                mockup.style.transform = `translateY(${scrollY * 0.15}px)`;
+            }, { passive: true });
+        }
+
+        // IntersectionObserver for reveal elements
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            document.querySelectorAll('.reveal').forEach((el, i) => {
+                el.style.transitionDelay = `${(i % 3) * 0.1}s`;
+                observer.observe(el);
+            });
+
+            // Stats counter
+            const statsObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        document.querySelectorAll('.hero-stat-num').forEach((el) => {
+                            const target = parseInt(el.dataset.target, 10);
+                            if (!target || el.dataset.animated) return;
+                            el.dataset.animated = 'true';
+                            animateCounter(el, 0, target, 2000);
+                        });
+                        statsObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            const heroStats = document.querySelector('.landing-hero-stats');
+            if (heroStats) statsObserver.observe(heroStats);
+        } else {
+            // Fallback: show everything immediately
+            document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
+            document.querySelectorAll('.hero-stat-num').forEach((el) => {
+                el.textContent = el.dataset.target || '0';
+            });
+        }
+    }
+
+    function animateCounter(el, start, end, duration) {
+        const range = end - start;
+        const startTime = performance.now();
+        function update(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(start + range * eased);
+            if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+        if (state.currentView !== 'home') return;
+        const vid = document.querySelector('#active-card video');
+        if (!vid) return;
+        if (e.key === ' ' || e.key === 'k') { e.preventDefault(); togglePlay(); }
+        if (e.key === 'j' || e.key === 'ArrowLeft') { e.preventDefault(); vid.currentTime = Math.max(0, vid.currentTime - 10); if (state._seekFlash) state._seekFlash('-10s'); }
+        if (e.key === 'l' || e.key === 'ArrowRight') { e.preventDefault(); vid.currentTime = Math.min(vid.duration, vid.currentTime + 10); if (state._seekFlash) state._seekFlash('+10s'); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); vid.volume = Math.min(1, vid.volume + 0.1); state.playerVolume = vid.volume; updateVolumeIcon(vid.volume, vid.muted); const f = document.getElementById('volume-fill'); if (f) f.style.width = `${vid.volume * 100}%`; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); vid.volume = Math.max(0, vid.volume - 0.1); state.playerVolume = vid.volume; updateVolumeIcon(vid.volume, vid.muted); const f = document.getElementById('volume-fill'); if (f) f.style.width = `${vid.volume * 100}%`; }
+        if (e.key === 'm') { e.preventDefault(); vid.muted = !vid.muted; updateVolumeIcon(vid.muted ? 0 : state.playerVolume, vid.muted); }
+    });
 
     window.onload = init;
 </script>
