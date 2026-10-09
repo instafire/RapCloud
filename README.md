@@ -71,11 +71,15 @@
 
 ## ⚙️ Environment Variables (Optional)
 
-RapCloud works out of the box with zero external configuration. You can optionally create a `.env` file to customize settings:
+RapCloud works out of the box for local development. If no development secret is set, it creates a private random `.auth-secret` file (mode `0600`) and reuses it across restarts. This local file is ignored by Git.
+
+For production, set `NODE_ENV=production` and provide `AUTH_SECRET` with at least 32 random bytes. Startup fails closed if the secret is missing, too short, or a known placeholder. Generate one with `openssl rand -hex 32` and keep it in your deployment's secret manager, not in Git.
+
+You can create a `.env` file to customize settings:
 
 ```env
 PORT=3001
-AUTH_SECRET=your-custom-hmac-secret
+AUTH_SECRET=
 ADMIN_USERS=rapradmin,yourusername
 ```
 

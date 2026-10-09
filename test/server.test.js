@@ -4,8 +4,10 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+process.env.AUTH_SECRET = 'rapcloud-test-auth-secret-0123456789abcdef';
 const { buildApp } = require('../server');
 const { JsonStore } = require('../lib/store');
+const { createAuthToken } = require('../lib/auth');
 
 test('server routes support the core publishing and social flows', async (t) => {
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rapr-server-'));
@@ -50,6 +52,7 @@ test('server routes support the core publishing and social flows', async (t) => 
     let result = await request('/api/health');
     assert.equal(result.response.status, 200);
     assert.equal(result.data.ok, true);
+    assert.equal(result.response.headers.get('x-content-type-options'), 'nosniff');
 
     result = await request('/api/auth', {
         method: 'POST',
@@ -187,6 +190,8 @@ test('server routes support the core publishing and social flows', async (t) => 
 
     const profileForm = new FormData();
     profileForm.set('bio', 'Updated bio');
+    profileForm.set('header_gradient', 'header-gold');
+    profileForm.set('links', JSON.stringify([{ platform: 'Portfolio', url: 'https://artist.example/profile' }]));
     profileForm.set('avatar_file', new Blob(['avatar bytes'], { type: 'image/png' }), 'avatar.png');
 
     result = await request('/api/profile/update', {
@@ -198,9 +203,68 @@ test('server routes support the core publishing and social flows', async (t) => 
     assert.equal(result.data.success, true);
     assert.equal(result.data.data.bio, 'Updated bio');
     assert.match(result.data.data.avatar, /^\/uploads\//);
+    assert.equal(result.data.data.header_gradient, 'header-gold');
+    assert.equal(Object.hasOwn(result.data.data, 'password'), false);
 
     const avatarPath = path.join(__dirname, '..', result.data.data.avatar.replace(/^\/+/, '').replace(/\//g, path.sep));
     createdFiles.push(avatarPath);
+
+    result = await request('/api/profile?user=artist1&viewer=artist1', {
+        headers: { Authorization: `Bearer ${artistToken}` }
+    });
+    assert.equal(result.data.header_gradient, 'header-gold');
+    assert.deepEqual(result.data.links, [{ platform: 'Portfolio', url: 'https://artist.example/profile' }]);
+
+    const clearLinksForm = new FormData();
+    clearLinksForm.set('links', '[]');
+    result = await request('/api/profile/update', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${artistToken}` },
+        body: clearLinksForm
+    });
+    assert.equal(result.data.success, true);
+    result = await request('/api/profile?user=artist1&viewer=artist1', {
+        headers: { Authorization: `Bearer ${artistToken}` }
+    });
+    assert.deepEqual(result.data.links, []);
+
+    store.updateUserProfile('artist1', {
+        bio: '<script>alert(1)</script>',
+        avatar: 'https://cdn.example/avatar.png" onerror="alert(2)',
+        links: [
+            { platform: 'Portfolio" onmouseover="alert(3)', url: 'https://artist.example/" onmouseover="alert(4)' },
+            { platform: 'Unsafe', url: 'javascript:alert(5)' }
+        ]
+    });
+    store.addVideo({
+        username: 'artist1',
+        bio: '<img src=x onerror=alert(6)>',
+        tags: ['rap'],
+        mediaPath: '/VIDEOS/test.mp4'
+    });
+    result = await request('/artist/artist1');
+    assert.equal(result.response.status, 200);
+    assert.ok(result.data.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    assert.ok(result.data.includes('&lt;img src=x onerror=alert(6)&gt;'));
+    assert.ok(result.data.includes('rel="noopener noreferrer"'));
+    assert.ok(!result.data.includes('<script>alert(1)</script>'));
+    assert.ok(!result.data.includes('onerror="alert(2)"'));
+    assert.ok(!result.data.includes('href="javascript:'));
+
+    const previousAdminUsers = process.env.ADMIN_USERS;
+    process.env.ADMIN_USERS = 'moderator1, moderator2';
+    try {
+        store.createUser('moderator1', 'unused-test-hash');
+        const moderatorToken = createAuthToken('moderator1', process.env.AUTH_SECRET);
+        result = await request('/api/admin/reports', {
+            headers: { Authorization: `Bearer ${moderatorToken}` }
+        });
+        assert.equal(result.response.status, 200);
+        assert.ok(Array.isArray(result.data));
+    } finally {
+        if (previousAdminUsers === undefined) delete process.env.ADMIN_USERS;
+        else process.env.ADMIN_USERS = previousAdminUsers;
+    }
 
     result = await request('/api/interact?action=get_followers&target=artist1', {
         headers: { Authorization: `Bearer ${artistToken}` }

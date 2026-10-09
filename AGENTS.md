@@ -9,7 +9,7 @@
 ## Commands
 - `npm install` — install deps
 - `npm start` / `npm run dev` — `node server.js` on `0.0.0.0:3001`
-- `npm test` — runs all tests via `node:test` runner (3 test files in `test/`)
+- `npm test` — runs all `test/*.test.js` files via the built-in `node:test` runner
 - `php -S localhost:8000` — serve PHP endpoints directly (legacy)
 
 ## Storage
@@ -24,7 +24,7 @@ Use `node:test` + `node:assert/strict`. No external test runner. Tests create te
 - Auth tokens: custom HMAC-sha256 (30-day TTL). Include as `Authorization: Bearer <token>`.
 - `normalizeHash` in `lib/auth.js` converts `$2y$` bcrypt prefix to `$2b$` for Node compat.
 - Single `/api/interact` endpoint dispatches by `action` param (like, comment, follow, save, send_message, block, report, etc.).
-- Video download via `/api/import` (URL → stream → VIDEOS/). Minimum valid size: 1KB. Max size: 200MB.
+- Video download via `/api/import` (URL → stream → VIDEOS/). Only standard-port HTTP(S) URLs resolving exclusively to public IPv4 addresses are accepted; redirects are revalidated. Max size: 200MB.
 
 ## Key Endpoints
 - `GET /api/feed` — paginated feed (`limit`, `offset`)
@@ -68,7 +68,7 @@ like, save, comment, get_comments, like_comment, delete_comment, follow, send_me
 - **Public artist profiles**: server-rendered HTML at `/artist/:username`, indexed by search engines
 
 ## Gotchas
-- No `.gitignore` — don't commit `node_modules/`, `uploads/`, or `.env` files.
+- `.gitignore` excludes `node_modules/`, `uploads/`, `.env` files, and the generated `.auth-secret`. Root JSON runtime files are tracked; use isolated temporary directories in tests and never commit real credentials or account data.
 - `dotenv` loads with `{ quiet: true }` in `server.js` — `.env` is optional.
 - Only the `server.js` `buildApp({ store })` export is testable; direct start uses `require.main === main`.
 - PHP auth tokens (`$2y$` bcrypt) will work with Node via `normalizeHash` conversion.
