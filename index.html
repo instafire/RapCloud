@@ -1057,12 +1057,28 @@
         return JSON.stringify(String(value ?? ''));
     }
 
+    const HEADER_GRADIENTS = new Set([
+        'header-dark', 'header-blood', 'header-purple', 'header-neon',
+        'header-gold', 'header-ocean', 'header-amber', 'header-gray'
+    ]);
+
     function sanitizeUrl(value, fallback = '') {
         const candidate = String(value || '').trim();
         if (!candidate) return fallback;
-        if (/^(https?:|blob:|data:)/i.test(candidate)) return candidate;
-        if (candidate.startsWith('/')) return candidate;
-        return `/${candidate.replace(/^\/+/, '')}`;
+        if (candidate.startsWith('//')) return fallback;
+        try {
+            const parsed = new URL(candidate, window.location.origin);
+            if (['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password) {
+                return parsed.href;
+            }
+            if (parsed.protocol === 'blob:' && parsed.origin === window.location.origin) {
+                return parsed.href;
+            }
+            if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=]+$/i.test(candidate)) {
+                return candidate;
+            }
+        } catch {}
+        return fallback;
     }
 
     function normalizeTagsInput(value) {
@@ -1473,7 +1489,7 @@
                 if (data.streak > 6) avatarBorderEl.classList.add('streak-active');
             }
             // Custom header gradient
-            const headerGrad = data.header_gradient || '';
+            const headerGrad = HEADER_GRADIENTS.has(data.header_gradient) ? data.header_gradient : '';
             const hContainer = document.getElementById('profile-header-container');
             if (headerGrad && hContainer) {
                 hContainer.style.backgroundImage = 'none';
@@ -1494,7 +1510,7 @@
             tagsLine.innerHTML = '';
             if (data.collab_profile?.looking) {
                 tagsLine.innerHTML = `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-cyan-400"><i class="fas fa-handshake"></i> OPEN TO COLLABS</span>`;
-                if (data.collab_profile.role) tagsLine.innerHTML += `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-zinc-400">${data.collab_profile.role.toUpperCase()}</span>`;
+                if (data.collab_profile.role) tagsLine.innerHTML += `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-zinc-400">${escapeHtml(String(data.collab_profile.role).toUpperCase())}</span>`;
             }
             if (data.mentor) tagsLine.innerHTML += `<span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded font-bold text-purple-400"><i class="fas fa-graduation-cap"></i> MENTOR</span>`;
 
@@ -1532,7 +1548,7 @@
                 const el = document.querySelector('.profile-achievements');
                 if (el) {
                     const labels = { first_drop: '🎤', ten_drops: '💿', hundred_views: '👁️', thousand_views: '🔥', hundred_likes: '❤️', streak_7: '⭐', streak_30: '👑' };
-                    el.innerHTML = data.achievements.map((a) => `<span title="${a}" style="font-size:16px;opacity:0.7">${labels[a] || '🏆'}</span>`).join('');
+                    el.innerHTML = data.achievements.map((a) => `<span title="${escapeHtml(a)}" style="font-size:16px;opacity:0.7">${labels[a] || '🏆'}</span>`).join('');
                 }
             }
 
@@ -1547,15 +1563,15 @@
                     else if (p.includes('spotify')) icon = 'fab fa-spotify';
                     else if (p.includes('youtube') || p.includes('yt')) icon = 'fab fa-youtube';
                     else if (p.includes('instagram') || p.includes('ig')) icon = 'fab fa-instagram';
-                    linksEl.innerHTML += `<a href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm border border-white/10 hover:bg-white/20 transition"><i class="${icon}"></i></a>`;
+                    linksEl.innerHTML += `<a href="${escapeHtml(sanitizeUrl(l.url))}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm border border-white/10 hover:bg-white/20 transition"><i class="${icon}"></i></a>`;
                 });
             }
             
             // Only update images if data exists, otherwise keep placeholder
             if(data.avatar) document.getElementById('profile-avatar-img').src = sanitizeUrl(data.avatar);
-            if (data.header_gradient) {
+            if (headerGrad) {
                 document.getElementById('profile-header-container').style.backgroundImage = 'none';
-                document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + ' ' + data.header_gradient;
+                document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + ' ' + headerGrad;
             } else if(data.header) {
                 document.getElementById('profile-header-container').style.backgroundImage = `url('${sanitizeUrl(data.header)}')`;
                 document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ');
@@ -1663,9 +1679,12 @@
 
     let linkRowCount = 0;
     let selectedHeaderGradient = '';
-    function setHeaderGradient(cls) {
-        selectedHeaderGradient = cls;
-        document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + (cls ? ' ' + cls : '');
+    let headerGradientTouched = false;
+    function setHeaderGradient(cls, markChanged = true) {
+        const safeClass = HEADER_GRADIENTS.has(cls) ? cls : '';
+        selectedHeaderGradient = safeClass;
+        headerGradientTouched = markChanged;
+        document.getElementById('profile-header-container').className = document.getElementById('profile-header-container').className.split(' ').filter((c) => !c.startsWith('header-')).join(' ') + (safeClass ? ' ' + safeClass : '');
         document.getElementById('profile-header-container').style.backgroundImage = 'none';
     }
     function addLinkRow(platform, url) {
@@ -1684,8 +1703,8 @@
             document.getElementById('edit-bio-input').value = data.bio || '';
             document.getElementById('preview-avatar').src = sanitizeUrl(data.avatar || '');
             document.getElementById('preview-header').src = sanitizeUrl(data.header || '');
-            if (data.header_gradient) { setHeaderGradient(data.header_gradient); }
-            else { selectedHeaderGradient = ''; }
+            if (data.header_gradient) { setHeaderGradient(data.header_gradient, false); }
+            else { selectedHeaderGradient = ''; headerGradientTouched = false; }
             // Reset links
             linkRowCount = 0;
             document.getElementById('edit-links-container').innerHTML = '';
@@ -1700,6 +1719,7 @@
     /* --- PROFILE UPDATE --- */
     function previewImage(input, imgId) {
         if(input.files && input.files[0]) {
+            if (imgId === 'preview-header') setHeaderGradient('', true);
             const reader = new FileReader();
             reader.onload = function(e) { document.getElementById(imgId).src = e.target.result; }
             reader.readAsDataURL(input.files[0]);
@@ -1721,10 +1741,8 @@
                 links.push({ platform: platEl.value.trim(), url: urlEl.value.trim() });
             }
         }
-        if (links.length > 0) {
-            fd.append('links', JSON.stringify(links));
-        }
-        if (selectedHeaderGradient) {
+        fd.append('links', JSON.stringify(links));
+        if (headerGradientTouched) {
             fd.append('header_gradient', selectedHeaderGradient);
         }
         
@@ -1899,19 +1917,19 @@
         const authorAvatar = sanitizeUrl(data.avatar || authorData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=000&color=fff`);
         const isSaved = state.saved.includes(vidId) ? 'fas text-yellow-400 saved' : 'far text-white';
         const isLiked = data.has_liked ? 'liked text-red-600' : 'text-white';
-        const tagsHtml = data.tags ? data.tags.map(t => `<span onclick='event.stopPropagation(); openExploreTag(${jsString(t)})' class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-white/40 transition">#${escapeHtml(t)}</span>`).join('') : '';
-        const mentionsHtml = Array.isArray(data.mentions) && data.mentions.length ? data.mentions.map(m => `<span onclick='event.stopPropagation(); openUserProfile(${jsString(m)})' class="text-blue-400 text-[10px] font-bold cursor-pointer hover:text-blue-300 transition">@${escapeHtml(m)}</span>`).join(' ') : '';
-        const collabHtml = Array.isArray(data.collaborators) && data.collaborators.length ? `<p class="text-[10px] mt-1">${data.collaborators.map(c => `<span onclick='event.stopPropagation(); openUserProfile(${jsString(c)})' class="text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition">@${escapeHtml(c)}</span>`).join(' ')}</p>` : '';
+        const tagsHtml = data.tags ? data.tags.map(t => `<span onclick='event.stopPropagation(); openExploreTag(${escapeHtml(jsString(t))})' class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-white/40 transition">#${escapeHtml(t)}</span>`).join('') : '';
+        const mentionsHtml = Array.isArray(data.mentions) && data.mentions.length ? data.mentions.map(m => `<span onclick='event.stopPropagation(); openUserProfile(${escapeHtml(jsString(m))})' class="text-blue-400 text-[10px] font-bold cursor-pointer hover:text-blue-300 transition">@${escapeHtml(m)}</span>`).join(' ') : '';
+        const collabHtml = Array.isArray(data.collaborators) && data.collaborators.length ? `<p class="text-[10px] mt-1">${data.collaborators.map(c => `<span onclick='event.stopPropagation(); openUserProfile(${escapeHtml(jsString(c))})' class="text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition">@${escapeHtml(c)}</span>`).join(' ')}</p>` : '';
         const songTitleHtml = data.song_title ? `<p class="text-white text-sm font-black drop-shadow-md">${escapeHtml(data.song_title)}</p>` : '';
-        const producerHtml = data.producer ? `<span onclick='event.stopPropagation(); openExploreTag(${jsString(data.producer)})' class="text-gray-300 text-[10px] font-bold drop-shadow-md cursor-pointer hover:text-white">prod. ${escapeHtml(data.producer)}</span>` : '';
-        const soundChipHtml = data.original_sound_id ? `<span onclick='event.stopPropagation(); openSoundVideos(${jsString(data.original_sound_id)})' class="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold text-gray-300 cursor-pointer hover:bg-white/30 transition mt-1 inline-block"><i class="fas fa-music text-[8px] mr-1"></i>Original Sound</span>` : '';
+        const producerHtml = data.producer ? `<span onclick='event.stopPropagation(); openExploreTag(${escapeHtml(jsString(data.producer))})' class="text-gray-300 text-[10px] font-bold drop-shadow-md cursor-pointer hover:text-white">prod. ${escapeHtml(data.producer)}</span>` : '';
+        const soundChipHtml = data.original_sound_id ? `<span onclick='event.stopPropagation(); openSoundVideos(${escapeHtml(jsString(data.original_sound_id))})' class="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold text-gray-300 cursor-pointer hover:bg-white/30 transition mt-1 inline-block"><i class="fas fa-music text-[8px] mr-1"></i>Original Sound</span>` : '';
         const lyricsHtml = data.lyrics ? `<div id="lyrics-overlay" class="absolute top-0 left-0 w-full h-full z-45 bg-black/80 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300"><pre class="text-white text-sm font-bold text-center leading-relaxed px-6 max-h-[70%] overflow-y-auto whitespace-pre-wrap pointer-events-auto" style="font-family:inherit">${escapeHtml(data.lyrics)}</pre></div>` : '';
 
         // --- NEW: CHECK IF USER OWNS VIDEO ---
         let deleteBtnHTML = '';
         if (data.username === state.currentUser) {
             deleteBtnHTML = `
-                <div class="action-btn" onclick='deleteVideo(${jsString(vidId)})'>
+                <div class="action-btn" onclick='deleteVideo(${escapeHtml(jsString(vidId))})'>
                     <div class="action-icon-bg" style="background:rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.5);">
                         <i class="fas fa-trash text-red-500 text-lg"></i>
                     </div>
@@ -1923,7 +1941,7 @@
         el.className = 'video-card';
         el.id = 'active-card';
         el.innerHTML = `
-            <video playsinline loop class="w-full h-full object-cover" src="${sanitizeUrl(data.video)}"></video>
+            <video playsinline loop class="w-full h-full object-cover" src="${escapeHtml(sanitizeUrl(data.video))}"></video>
             <div class="gesture-layer"></div><div class="overlay-gradient"></div>
             <div class="center-play-icon"><i class="fas fa-play"></i></div><div class="stamp stamp-fire">FIRE</div><div class="stamp stamp-trash">TRASH</div>
             ${data.visibility === 'vault' ? '<div class="absolute top-4 right-4 z-30 bg-amber-600/80 px-2 py-0.5 rounded text-[9px] font-bold text-white backdrop-blur-sm"><i class="fas fa-lock"></i> VAULT</div>' : ''}
@@ -1940,7 +1958,7 @@
                 </div>
             </div>
             <div class="interaction-column">
-                <div class="action-btn" onclick='openUserProfile(${jsString(data.username)})'><div class="w-12 h-12 rounded-full border-2 border-white mb-4 overflow-hidden shadow-lg"><img src="${authorAvatar}" class="w-full h-full object-cover"></div></div>
+                <div class="action-btn" onclick='openUserProfile(${escapeHtml(jsString(data.username))})'><div class="w-12 h-12 rounded-full border-2 border-white mb-4 overflow-hidden shadow-lg"><img src="${escapeHtml(authorAvatar)}" class="w-full h-full object-cover"></div></div>
                 <div class="action-btn" onclick="likeVideo(${state.currentIndex})"><div class="action-icon-bg"><i class="fas fa-heart text-2xl ${isLiked}" id="like-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md" id="like-count">${data.likes}</span></div>
                 <div class="action-btn" onclick='openComments(${jsString(vidId)})'><div class="action-icon-bg"><i class="fas fa-comment-dots text-white text-xl"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">${data.comments_count || 0}</span></div>
                 <div class="action-btn" onclick='toggleSave(${jsString(vidId)}, this)'><div class="action-icon-bg"><i class="${isSaved} fa-bookmark text-xl transition-all duration-200" id="save-icon"></i></div><span class="text-[10px] font-bold text-white drop-shadow-md">Save</span></div>
@@ -2549,7 +2567,7 @@
             list.innerHTML = '';
             if (!reports.length) { list.innerHTML = '<p class="text-zinc-600 text-xs text-center py-2">No reports.</p>'; return; }
             reports.forEach((r) => {
-                list.innerHTML += `<div class="p-2 bg-zinc-900 rounded text-[10px]"><span class="text-zinc-400">@${escapeHtml(r.reporter)}</span> reported <span class="text-white font-bold">${escapeHtml(r.reason)}</span>${r.video ? ` <button onclick="adminRemoveVideo('${escapeHtml(r.videoId)}')" class="text-red-500 ml-2">REMOVE</button>` : ''}</div>`;
+                list.innerHTML += `<div class="p-2 bg-zinc-900 rounded text-[10px]"><span class="text-zinc-400">@${escapeHtml(r.reporter)}</span> reported <span class="text-white font-bold">${escapeHtml(r.reason)}</span>${r.video ? ` <button onclick="adminRemoveVideo(${escapeHtml(jsString(r.videoId))})" class="text-red-500 ml-2">REMOVE</button>` : ''}</div>`;
             });
         } catch { list.innerHTML = '<p class="text-zinc-600 text-xs text-center py-2">Error.</p>'; }
     }
@@ -2611,7 +2629,7 @@
         const container = document.getElementById('trending-tags');
         try {
             const tags = await apiRequest('/api/feed/trending?limit=10');
-            container.innerHTML = tags.map((t) => `<span onclick="openExploreTag('${escapeHtml(t.tag)}')" class="tag-pill whitespace-nowrap flex-shrink-0">#${escapeHtml(t.tag)} <span class="text-zinc-600 ml-1">${t.count}</span>${t.count > 5 ? ' <i class="fas fa-fire text-orange-400 text-[8px]"></i>' : ''}</span>`).join('');
+            container.innerHTML = tags.map((t) => `<span onclick="openExploreTag(${escapeHtml(jsString(t.tag))})" class="tag-pill whitespace-nowrap flex-shrink-0">#${escapeHtml(t.tag)} <span class="text-zinc-600 ml-1">${escapeHtml(t.count)}</span>${t.count > 5 ? ' <i class="fas fa-fire text-orange-400 text-[8px]"></i>' : ''}</span>`).join('');
         } catch { container.innerHTML = ''; }
     }
 
@@ -2646,7 +2664,9 @@
             drafts.forEach((d) => {
                 const isScheduled = d.scheduled_at && d.scheduled_at > Date.now();
                 const scheduledLabel = isScheduled ? `<span class="text-[9px] text-cyan-400 ml-2"><i class="fas fa-clock"></i> ${Math.round((d.scheduled_at - Date.now()) / 3600000)}h</span>` : '';
-                container.innerHTML += `<div class="flex items-center justify-between py-2 border-b border-zinc-900 ${isScheduled ? 'opacity-70' : ''}"><div class="flex-1"><p class="text-xs font-bold text-white">${escapeHtml(d.bio || 'Untitled')}${scheduledLabel}</p><p class="text-[9px] text-zinc-500">${d.song_title || 'No title'} ${d.tags?.length ? '#' + d.tags.join(' #') : ''}</p></div>${isScheduled ? '' : `<button onclick="publishDraft(${jsString(d.id)})" class="text-[9px] font-bold text-red-500 bg-red-900/20 px-3 py-1 rounded">PUBLISH</button>`}<button onclick="deleteDraft(${jsString(d.id)})" class="text-[9px] text-zinc-600 ml-2"><i class="fas fa-trash"></i></button></div>`;
+                const draftTags = Array.isArray(d.tags) ? d.tags.map((tag) => escapeHtml(tag)).join(' #') : '';
+                const draftId = escapeHtml(jsString(d.id));
+                container.innerHTML += `<div class="flex items-center justify-between py-2 border-b border-zinc-900 ${isScheduled ? 'opacity-70' : ''}"><div class="flex-1"><p class="text-xs font-bold text-white">${escapeHtml(d.bio || 'Untitled')}${scheduledLabel}</p><p class="text-[9px] text-zinc-500">${escapeHtml(d.song_title || 'No title')} ${draftTags ? '#' + draftTags : ''}</p></div>${isScheduled ? '' : `<button onclick="publishDraft(${draftId})" class="text-[9px] font-bold text-red-500 bg-red-900/20 px-3 py-1 rounded">PUBLISH</button>`}<button onclick="deleteDraft(${draftId})" class="text-[9px] text-zinc-600 ml-2"><i class="fas fa-trash"></i></button></div>`;
             });
         } catch { container.innerHTML = '<div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-zinc-400 tracking-widest">YOUR DRAFTS</span><i class="fas fa-times text-zinc-500 cursor-pointer text-xs" onclick="document.getElementById(\'drafts-list\').classList.add(\'hidden\')"></i></div><p class="text-zinc-600 text-xs text-center py-4">Could not load drafts.</p>'; }
     }
@@ -2721,7 +2741,7 @@
             if (!beats.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">No beats yet. Upload one from the studio!</p>'; return; }
             beats.forEach((b) => {
                 const canRequest = b.username !== state.currentUser;
-                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800"><div class="w-10 h-10 rounded-full bg-amber-900/30 flex items-center justify-center text-amber-500"><i class="fas fa-drum"></i></div><div class="flex-1"><p class="text-sm font-bold text-white">${escapeHtml(b.title || 'Untitled')}</p><p class="text-[10px] text-zinc-500">@${escapeHtml(b.username)} ${b.bpm ? '• ' + b.bpm + ' BPM' : ''} ${b.genre ? '• ' + b.genre : ''}</p></div>${canRequest ? `<button onclick="requestBeat('${b.id}')" class="text-[9px] font-bold text-amber-500 bg-amber-900/20 px-3 py-1.5 rounded">REQUEST</button>` : '<span class="text-[9px] text-zinc-600">YOURS</span>'}</div>`;
+                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800"><div class="w-10 h-10 rounded-full bg-amber-900/30 flex items-center justify-center text-amber-500"><i class="fas fa-drum"></i></div><div class="flex-1"><p class="text-sm font-bold text-white">${escapeHtml(b.title || 'Untitled')}</p><p class="text-[10px] text-zinc-500">@${escapeHtml(b.username)} ${b.bpm ? '• ' + escapeHtml(b.bpm) + ' BPM' : ''} ${b.genre ? '• ' + escapeHtml(b.genre) : ''}</p></div>${canRequest ? `<button onclick="requestBeat(${escapeHtml(jsString(b.id))})" class="text-[9px] font-bold text-amber-500 bg-amber-900/20 px-3 py-1.5 rounded">REQUEST</button>` : '<span class="text-[9px] text-zinc-600">YOURS</span>'}</div>`;
             });
         } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load beats.</p>'; }
     }
@@ -2792,7 +2812,9 @@
             list.innerHTML = '';
             if (!connects.length) { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">No matches yet. Update your collab profile to get started.</p>'; return; }
             connects.forEach((c) => {
-                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800 cursor-pointer hover:bg-zinc-800/50" onclick='openUserProfile(${jsString(c.username)})'><div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lg text-cyan-400">${escapeHtml(c.username[0].toUpperCase())}</div><div class="flex-1"><p class="text-sm font-bold text-white">@${escapeHtml(c.username)} <span class="text-[9px] text-zinc-500">${escapeHtml(c.role || '')}</span></p><p class="text-[10px] text-zinc-500">${c.genres ? '# ' + c.genres.join(' #') : ''} ${c.availability ? '• ' + c.availability : ''}</p></div><i class="fas fa-chevron-right text-zinc-600 text-xs"></i></div>`;
+                const genres = Array.isArray(c.genres) ? c.genres.map((value) => escapeHtml(value)).join(' #') : '';
+                const availability = c.availability ? escapeHtml(c.availability) : '';
+                list.innerHTML += `<div class="flex items-center gap-3 p-4 bg-zinc-900 rounded-xl mb-3 border border-zinc-800 cursor-pointer hover:bg-zinc-800/50" onclick='openUserProfile(${escapeHtml(jsString(c.username))})'><div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lg text-cyan-400">${escapeHtml(c.username[0].toUpperCase())}</div><div class="flex-1"><p class="text-sm font-bold text-white">@${escapeHtml(c.username)} <span class="text-[9px] text-zinc-500">${escapeHtml(c.role || '')}</span></p><p class="text-[10px] text-zinc-500">${genres ? '# ' + genres : ''} ${availability ? '• ' + availability : ''}</p></div><i class="fas fa-chevron-right text-zinc-600 text-xs"></i></div>`;
             });
         } catch { list.innerHTML = '<p class="text-zinc-500 text-xs text-center mt-8">Could not load connects.</p>'; }
     }

@@ -2,12 +2,17 @@ require('dotenv').config({ quiet: true });
 
 const express = require('express');
 const multer = require('multer');
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream/promises');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const {
+    escapeHtml,
+    requestPublicHttp,
+    resolveAuthSecret,
+    safeExternalHttpUrl
+} = require('./lib/security');
 
 const {
     createAuthToken,
@@ -34,10 +39,14 @@ const BEATS_DIR = path.join(ROOT_DIR, 'BEATS');
 const WELL_KNOWN_DIR = path.join(ROOT_DIR, '.well-known');
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 3001);
-const AUTH_SECRET = process.env.AUTH_SECRET || 'development-secret-change-me';
+const AUTH_SECRET = resolveAuthSecret({ rootDir: ROOT_DIR });
 
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.webm', '.m4v', '.ogg']);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+const HEADER_GRADIENTS = new Set([
+    'header-dark', 'header-blood', 'header-purple', 'header-neon',
+    'header-gold', 'header-ocean', 'header-amber', 'header-gray'
+]);
 const MAX_DOWNLOAD_SIZE = 200 * 1024 * 1024;
 
 function ensureDirectories() {
@@ -79,7 +88,10 @@ function normalizeFileExtension(originalName, mimeType, allowedExtensions, fallb
 }
 
 function isLocalProjectPath(filePath) {
-    return typeof filePath === 'string' && path.resolve(filePath).startsWith(ROOT_DIR);
+    if (typeof filePath !== 'string') return false;
+    const root = path.resolve(ROOT_DIR);
+    const resolved = path.resolve(filePath);
+    return resolved.startsWith(`${root}${path.sep}`);
 }
 
 function safeUnlink(filePath) {
@@ -112,28 +124,20 @@ function requireAuth(req, res, next) {
     return next();
 }
 
+function isAdminUser(username) {
+    const candidate = String(username || '').trim().toLowerCase();
+    if (candidate === 'rapradmin') return true;
+    return String(process.env.ADMIN_USERS || '')
+        .split(',')
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
+        .includes(candidate);
+}
+
 async function downloadVideoFromUrl(videoUrl) {
-    let parsedUrl;
-    try {
-        parsedUrl = new URL(String(videoUrl || '').trim());
-    } catch {
-        throw new Error('Paste a valid direct video URL.');
-    }
+    const { response, url: parsedUrl } = await requestPublicHttp(videoUrl);
 
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        throw new Error('Only http and https video URLs are supported.');
-    }
-
-    const response = await axios({
-        method: 'GET',
-        url: parsedUrl.toString(),
-        responseType: 'stream',
-        maxRedirects: 5,
-        timeout: 30000,
-        validateStatus: (status) => status >= 200 && status < 400
-    });
-
-    const contentLength = parseInt(response.headers['content-length'] || '0', 10);
+    const contentLength = Number(response.headers['content-length'] || 0);
     if (contentLength > MAX_DOWNLOAD_SIZE) {
         response.data.destroy();
         throw new Error('Video is too large. Maximum size is 200MB.');
@@ -141,7 +145,7 @@ async function downloadVideoFromUrl(videoUrl) {
 
     const extension = normalizeFileExtension(
         parsedUrl.pathname,
-        response.headers['content-type'],
+        String(response.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase(),
         VIDEO_EXTENSIONS,
         ''
     );
@@ -202,6 +206,11 @@ function buildApp(options = {}) {
         if (io) io.to(`user:${username}`).emit('notification', notification);
     });
     const app = express();
+    app.use((req, res, next) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        next();
+    });
     app._store = store;
 
     const rateLimitBuckets = new Map();
@@ -351,17 +360,25 @@ function buildApp(options = {}) {
     app.get('/artist/:username', (req, res) => {
         const data = store.getPublicFeed(req.params.username);
         if (!data.success) return res.status(404).send('Artist not found');
-        const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=000&color=fff`;
-        const videosHtml = data.videos.map((v) => `
+        const username = escapeHtml(data.username);
+        const bio = escapeHtml(data.bio || 'Underground rap artist');
+        const avatar = escapeHtml(data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=000&color=fff`);
+        const artistUrl = escapeHtml(`https://rap.genznewz.com/artist/${encodeURIComponent(data.username)}`);
+        const description = escapeHtml(`${data.bio || 'Underground rap artist'} — Check out drops from ${data.username} on RapR, the underground rap platform.`);
+        const videosHtml = data.videos.map((video) => `
             <div style="aspect-ratio:9/16;background:#111;border-radius:12px;overflow:hidden;position:relative">
-                <video src="${normalizeMediaPath(v.video)}" muted style="width:100%;height:100%;object-fit:cover"></video>
+                <video src="${escapeHtml(normalizeMediaPath(video.video))}" muted style="width:100%;height:100%;object-fit:cover"></video>
                 <div style="position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,0.9))">
-                    <p style="margin:0;font-size:11px;font-weight:700;color:white">${String(v.bio || '').slice(0, 60)}</p>
+                    <p style="margin:0;font-size:11px;font-weight:700;color:white">${escapeHtml(String(video.bio || '').slice(0, 60))}</p>
                 </div>
             </div>
         `).join('');
-        const linksHtml = Array.isArray(data.links) ? data.links.map((l) => `<a href="${l.url}" target="_blank" rel="noopener" style="color:#888;text-decoration:none;font-size:12px;margin:0 8px">${l.platform}</a>`).join('') : '';
-        res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>@${data.username} on RapR — Underground Rap Artist</title><meta name="description" content="${data.bio} — Check out drops from ${data.username} on RapR, the underground rap platform."><meta property="og:title" content="@${data.username} on RapR"><meta property="og:description" content="${data.bio || 'Underground rap artist on RapR'}"><meta property="og:image" content="${avatar}"><meta property="og:url" content="https://rap.genznewz.com/artist/${encodeURIComponent(data.username)}"><meta name="twitter:card" content="summary"><link rel="canonical" href="https://rap.genznewz.com/artist/${encodeURIComponent(data.username)}"><style>body{background:#0a0a0a;color:white;font-family:system-ui,sans-serif;margin:0;padding:0}img,video{max-width:100%}a{color:#ef4444}</style></head><body style="max-width:800px;margin:0 auto;padding:24px"><div style="text-align:center;padding:40px 0"><img src="${avatar}" style="width:96px;height:96px;border-radius:50%;border:3px solid #ef4444" alt="${data.username}"><h1 style="font-size:32px;font-weight:900;margin:12px 0 4px">@${data.username}</h1><p style="color:#888;font-size:14px;margin:0 0 16px">${data.bio || 'Underground rap artist'}</p><div style="margin-bottom:16px">${linksHtml}</div><div style="color:#555;font-size:12px;margin-bottom:24px"><span style="font-weight:700;color:white">${data.total_drops}</span> drops</div><a href="https://rap.genznewz.com/?ref=artist" style="display:inline-block;background:#ef4444;color:white;padding:12px 32px;border-radius:50px;text-decoration:none;font-weight:700;font-size:13px">Follow on RapR</a></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px">${videosHtml}</div><footer style="text-align:center;padding:40px 0;color:#333;font-size:11px"><p>RapR — The Underground Rap Platform</p></footer></body></html>`);
+        const linksHtml = Array.isArray(data.links) ? data.links.map((link) => {
+            const url = safeExternalHttpUrl(link?.url);
+            if (!url) return '';
+            return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="color:#888;text-decoration:none;font-size:12px;margin:0 8px">${escapeHtml(link?.platform || '')}</a>`;
+        }).join('') : '';
+        return res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>@${username} on RapR — Underground Rap Artist</title><meta name="description" content="${description}"><meta property="og:title" content="@${username} on RapR"><meta property="og:description" content="${bio}"><meta property="og:image" content="${avatar}"><meta property="og:url" content="${artistUrl}"><meta name="twitter:card" content="summary"><link rel="canonical" href="${artistUrl}"><style>body{background:#0a0a0a;color:white;font-family:system-ui,sans-serif;margin:0;padding:0}img,video{max-width:100%}a{color:#ef4444}</style></head><body style="max-width:800px;margin:0 auto;padding:24px"><div style="text-align:center;padding:40px 0"><img src="${avatar}" style="width:96px;height:96px;border-radius:50%;border:3px solid #ef4444" alt="${username}"><h1 style="font-size:32px;font-weight:900;margin:12px 0 4px">@${username}</h1><p style="color:#888;font-size:14px;margin:0 0 16px">${bio}</p><div style="margin-bottom:16px">${linksHtml}</div><div style="color:#555;font-size:12px;margin-bottom:24px"><span style="font-weight:700;color:white">${escapeHtml(data.total_drops)}</span> drops</div><a href="https://rap.genznewz.com/?ref=artist" style="display:inline-block;background:#ef4444;color:white;padding:12px 32px;border-radius:50px;text-decoration:none;font-weight:700;font-size:13px">Follow on RapR</a></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px">${videosHtml}</div><footer style="text-align:center;padding:40px 0;color:#333;font-size:11px"><p>RapR — The Underground Rap Platform</p></footer></body></html>`);
     });
 
     app.get('/api/profile', (req, res) => {
@@ -371,10 +388,8 @@ function buildApp(options = {}) {
     });
 
     app.get('/api/admin/reports', requireAuth, (req, res) => {
-        const admins = ['rapradmin', (process.env.ADMIN_USERS || '').split(',').map((s) => s.trim()).filter(Boolean)];
-        if (!admins.includes(req.authUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
+        if (!isAdminUser(req.authUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
         const social = store.readSocial();
-        const videoIds = social.reports.map((r) => r.videoId);
         const videos = store.listFeed();
         const reported = social.reports.map((r) => ({
             ...r,
@@ -411,6 +426,11 @@ function buildApp(options = {}) {
             if (Object.prototype.hasOwnProperty.call(req.body || {}, 'bio')) {
                 updates.bio = requestedBio.slice(0, 280);
             }
+            if (Object.prototype.hasOwnProperty.call(req.body || {}, 'header_gradient')) {
+                const requestedGradient = String(req.body.header_gradient || '').trim();
+                updates.header_gradient = HEADER_GRADIENTS.has(requestedGradient) ? requestedGradient : '';
+                updates.header = '';
+            }
 
             if (req.files?.avatar_file?.[0]) {
                 const avatarFile = req.files.avatar_file[0];
@@ -445,15 +465,17 @@ function buildApp(options = {}) {
                 let parsedLinks;
                 try { parsedLinks = typeof rawLinks === 'string' ? JSON.parse(rawLinks) : rawLinks; } catch { parsedLinks = null; }
                 if (Array.isArray(parsedLinks)) {
-                    updates.links = parsedLinks.slice(0, 5).map((l) => ({
-                        platform: String(l.platform || '').trim().slice(0, 20),
-                        url: String(l.url || '').trim().slice(0, 500)
-                    })).filter((l) => l.platform && l.url && /^https?:\/\//i.test(l.url));
+                    updates.links = parsedLinks.slice(0, 5).map((link) => ({
+                        platform: String(link?.platform || '').trim().slice(0, 20),
+                        url: safeExternalHttpUrl(String(link?.url || '').trim().slice(0, 500)) || ''
+                    })).filter((link) => link.platform && link.url);
                 }
             }
 
             const updatedUser = store.updateUserProfile(currentUser, updates);
-            return res.json({ success: Boolean(updatedUser), data: updatedUser });
+            const responseUser = updatedUser ? { ...updatedUser } : null;
+            if (responseUser) delete responseUser.password;
+            return res.json({ success: Boolean(updatedUser), data: responseUser });
         }
     );
 
@@ -466,8 +488,11 @@ function buildApp(options = {}) {
         try {
             const imported = await downloadVideoFromUrl(videoUrl);
             return res.json({ success: true, ...imported });
-        } catch (error) {
-            return res.status(400).json({ success: false, message: error.message });
+        } catch {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not import the video. Use a public direct video URL under 200MB.'
+            });
         }
     });
 
@@ -647,9 +672,9 @@ function buildApp(options = {}) {
         if (action === 'update_links') {
             const links = Array.isArray(body.links) ? body.links.slice(0, 5) : [];
             const sanitized = links.map((l) => ({
-                platform: String(l.platform || '').trim().slice(0, 20),
-                url: String(l.url || '').trim().slice(0, 500)
-            })).filter((l) => l.platform && l.url && /^https?:\/\//i.test(l.url));
+                platform: String(l?.platform || '').trim().slice(0, 20),
+                url: safeExternalHttpUrl(String(l?.url || '').trim().slice(0, 500)) || ''
+            })).filter((l) => l.platform && l.url);
             const updated = store.updateUserProfile(currentUser, { links: sanitized });
             return res.json({ success: true, links: sanitized });
         }
@@ -667,8 +692,7 @@ function buildApp(options = {}) {
         }
 
         if (action === 'admin_verify_user') {
-            const admins = ['rapradmin', (process.env.ADMIN_USERS || '').split(',').map((s) => s.trim()).filter(Boolean)];
-            if (!admins.includes(currentUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
+            if (!isAdminUser(currentUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
             const target = body.target_username || req.query.target;
             store.updateUserProfile(target, { verified: true, verification_status: 'approved' });
             store.createNotification(target, currentUser, 'verify', 'Your account has been verified!');
@@ -732,8 +756,7 @@ function buildApp(options = {}) {
         }
 
         if (action === 'admin_remove_video') {
-            const admins = ['rapradmin', (process.env.ADMIN_USERS || '').split(',').map((s) => s.trim()).filter(Boolean)];
-            if (!admins.includes(currentUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
+            if (!isAdminUser(currentUser)) return res.status(403).json({ success: false, message: 'Not authorized.' });
             const result = store.deleteVideo(body.id || req.query.id, currentUser);
             if (result.success && result.absolutePath?.startsWith(VIDEOS_DIR)) safeUnlink(result.absolutePath);
             return res.json({ success: result.success });
