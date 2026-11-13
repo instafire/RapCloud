@@ -53,6 +53,7 @@ test('server routes support the core publishing and social flows', async (t) => 
     assert.equal(result.response.status, 200);
     assert.equal(result.data.ok, true);
     assert.equal(result.response.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(result.response.headers.get('x-powered-by'), null);
 
     result = await request('/api/auth', {
         method: 'POST',
